@@ -31,10 +31,10 @@ class CaiOsmData:
         return respData.decode(encoding='utf-8',errors='ignore')
         
 
-    def get_data_csv(self, csvheader = False):
+    def get_data_csv(self, csvheader = False, tags='::id,"name","ref"'):
         if csvheader:
             self.csvheader = True
-        temp = """[out:csv(::id,"name","ref";{csvh};"{sep}")]
+        temp = """[out:csv({cols};{csvh};"{sep}")]
 ;
 {area}
 relation
@@ -48,11 +48,13 @@ out;"""
             instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
                                 bbox='area.a',
                                 csvh=str(self.csvheader).lower(),
-                                sep=self.separator)
+                                sep=self.separator,
+                                cols=tags)
         elif self.bbox:
             instr = temp.format(area='', bbox=self.bbox,
                                 csvh=str(self.csvheader).lower(),
-                                sep=self.separator)
+                                sep=self.separator,
+                                cols=tags)
         else:
             raise ValueError('One of area or box argument should be used')
             
