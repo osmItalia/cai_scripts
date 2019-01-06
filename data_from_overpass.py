@@ -22,6 +22,10 @@ class CaiOsmData:
 
 
     def _get_data(self, instr):
+        """Private function to obtain the OSM data from overpass api
+
+        :param str instr: the string with the overpass syntax
+        """
         values = {'data': instr}
         data = urllib.parse.urlencode(values)
         data = data.encode('utf-8') # data should be bytes
@@ -32,7 +36,12 @@ class CaiOsmData:
         return respData.decode(encoding='utf-8',errors='ignore')
         
 
-    def get_data_csv(self, csvheader = False, tags='::id,"name","ref"'):
+    def get_data_csv(self, csvheader=False, tags='::id,"name","ref"'):
+        """Function to return data in CSV format
+
+        :param bool csvheader: show or hide the csv header, default hidden
+        :param str tags: a list of tags to show in the csv
+        """
         if csvheader:
             self.csvheader = True
         temp = """[out:csv({cols};{csvh};"{sep}")]
@@ -63,6 +72,7 @@ out;"""
 
 
     def get_data_osm(self):
+        """Function to return data in the original OSM format"""
         temp = """[out:xml]
 ;
 {area}
@@ -117,7 +127,9 @@ out skel qt;"""
         data = self.get_data_json()
         tags = []
         for elem in data['elements']:
+            #check if the element is a relation
             if elem['type'] == 'relation':
+                # cai_scale used as tag to reconize CAI paths
                 if elem['tags']['type'] == 'route' and 'cai_scale' in elem['tags'].keys():
                     vals = elem['tags']
                     vals['id'] = elem['id']
