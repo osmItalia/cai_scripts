@@ -1,0 +1,12 @@
+\documentclass[11pt,a4paper]{book} % din a4, 11 pt, one sided
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage[utf8x]{inputenc}
+
+\pagenumbering{gobble}
+
+\begin{document}
+	\BLOCK{ for x in refs }
+	\include{testo_\VAR{x}}
+	\BLOCK{ endfor }
+\end{document}

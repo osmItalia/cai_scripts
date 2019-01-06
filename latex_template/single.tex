@@ -1,0 +1,95 @@
+\documentclass[12pt,a4paper]{article} % din a4, 11 pt, one sided
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage[utf8x]{inputenc}
+
+\begin{document}
+\begin{flushright}
+	\BLOCK{ if tags.name }
+	\textbf{\VAR{tags.name}}
+	\BLOCK{ endif }
+
+	\begin{tikzpicture}
+	\draw [fill=red] (0, 0) rectangle (1, 1);
+	\draw [fill=white] (1, 0) rectangle (2.5, 1) node[pos=.5] { \VAR{tags.ref} };
+	\draw [fill=red] (2.5, 0) rectangle (3.5, 1);
+	\end{tikzpicture}
+	
+	\VAR{tags.cai_scale}
+	\BLOCK{ if tags.old_ref }
+	(\VAR{tags.old_ref}})
+	\BLOCK{ endif }
+	
+	\BLOCK{ if tags.rwnname }
+	\VAR(tags.rwnmane)
+	\BLOCK{ endif }
+	
+	\BLOCK{ if tags.refREI }
+	\VAR(tags.refREI)
+	\BLOCK{ endif }	
+	
+	\BLOCK{ if tags.network == 'lwn' }
+	\tiny{Sentiero locale}
+	\BLOCK{ elif tags.network == 'rwn' }
+	\tiny{Sentiero regionale}
+	\BLOCK{ elif tags.network == 'nwn' }
+	\tiny{Sentiero nazionale}
+	\BLOCK{ elif tags.network == 'iwn' }
+	\tiny{Sentiero internazionale}
+	\BLOCK{ endif }
+\end{flushright}
+\textit{
+\BLOCK{ if tags.from }
+\VAR{tags.from} 
+\BLOCK{ endif }
+\BLOCK{ if tags.to }
+- \VAR{tags.to}
+\BLOCK{ endif }
+}
+\bigskip
+
+\section{Informazioni sul sentiero}
+\begin{tabular}{ll}
+	Distanza: & \VAR{tags.distance} \\
+	Durata andata: & \VAR{tags.durationforward} \\
+	Durata ritorno: & \VAR{tags.durationbackward} \\
+	Dislivello positivo & \VAR{tags.ascent} \\
+	Dislivello negativo & \VAR{tags.descent} \\
+	\BLOCK{ if tags.roundtrip == 'yes' }
+	Sentiero circolare: &  si \\
+	\BLOCK{ else }
+	Sentiero circolare: &  no \\
+	\BLOCK{ endif }
+\end{tabular}
+
+\section{Informazioni mantenimento}
+\begin{tabular}{ll}
+	Sorgente: & \VAR{tags.source} \\
+	Data rilievo: & \VAR{tags.sourveydate} \\
+	Operatore: & \VAR{tags.operator} \\
+	Stato: & \VAR{tags.state} \\
+	\BLOCK{ if tags.maintenanceit }
+	Mantenimento: &  \VAR{tags.maintenanceit} \\
+	\BLOCK{ else }
+	Mantenimento: &  \VAR{tags.maintenance} \\
+	\BLOCK{ endif }
+	\BLOCK{ if tags.noteit }
+	Note: &  \VAR{tags.noteit} \\
+	\BLOCK{ else }
+	Note: &  \VAR{tags.note} \\
+	\BLOCK{ endif }
+	\BLOCK{ if tags.descriptionit }
+	Descrizione: &  \VAR{tags.descriptionit} \\
+	\BLOCK{ else }
+	Descrizione: &  \VAR{tags.description} \\
+	\BLOCK{ endif }
+\end{tabular}
+
+\vspace*{\fill}
+\begin{flushright}
+	\BLOCK{ if tags.website }
+	\url{\VAR{tags.website}}
+	\BLOCK{ endif }
+	\url{https://www.openstreetmap.org/relation/\VAR{tags.id}}	
+\end{flushright}
+\end{document}
