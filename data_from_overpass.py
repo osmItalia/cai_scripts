@@ -162,13 +162,25 @@ out skel qt;"""
         return out
 
 
-    def write(self, to, typ=None):
-        fil = open(to, 'w')
-        if typ == 'csv':
-            fil.write(self.get_data_csv())
-        elif typ == 'osm':
-            fil.write(self.get_data_osm())
-        elif typ == 'wikitable':
-            fil.write(self.wiki_table())
+    def write(self, to, out_format):
+        """Write the data obtained in different format into a file
+
+        :param str to: the path to the output file
+        :param str out_format: the required output format
+        """
+        if out_format == 'csv':
+            data = self.get_data_csv()
+        elif out_format == 'osm':
+            data = self.get_data_osm()
+        elif out_format == 'wikitable':
+            data = self.wiki_table()
+        elif out_format == 'json':
+            data = self.get_data_json()
+        elif out_format == 'tags':
+            data = self.get_tags_json()
         else:
-            raise ValueError('Only csv, osm, wikitable format are supported')
+            raise ValueError('Only csv, osm, wikitable, json, tags format are '
+                             'supported')
+        fil = open(to, 'w')
+        fil.write(data)
+        fil.close()
