@@ -7,6 +7,7 @@ Created on Thu Dec 13 07:28:20 2018
 """
 
 import sys
+import json
 import urllib.request
 
 class CaiOsmData:
@@ -84,6 +85,46 @@ out;"""
             raise ValueError('One of area or box argument should be used')
             
         return self._get_data(instr)
+
+
+    def get_data_json(self):
+        """Function to return the OSM data in JSON formats"""
+        temp = """[out:json]
+;
+{area}
+relation
+  ["route"="hiking"]
+  ["network"="lwn"]
+  ["cai_scale"]
+  ({bbox});
+out;
+>;
+out skel qt;"""
+
+        if self.area:
+            instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
+                                bbox='area.a')
+        elif self.bbox:
+            instr = temp.format(area='', bbox=self.bbox)
+        else:
+            raise ValueError('One of area or box argument should be used')
+
+        return json.loads(self._get_data(instr))
+
+
+    def get_tags_json(self, debug=False):
+        """Function to get the tags plus id for CAI relations"""
+        data = self.get_data_json()
+        tags = []
+        for elem in data['elements']:
+            if elem['type'] == 'relation':
+                if elem['tags']['type'] == 'route' and 'cai_scale' in elem['tags'].keys():
+                    vals = elem['tags']
+                    vals['id'] = elem['id']
+                    tags.append(vals)
+                    if debug:
+                        print(vals)
+        return tags
 
 
     def wiki_table(self):
