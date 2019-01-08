@@ -61,7 +61,8 @@ class CaiOsmReport:
         if not retcode == 0:
             print(err)
             raise ValueError('Error {} executing command: {}'.format(retcode,
-                                                                     cmd)) 
+                                                                     cmd))
+        return 0
 
     def _clean_tags(self, tags):
         newtags = {}
@@ -72,11 +73,11 @@ class CaiOsmReport:
                 newtags[k] = tags[k]
         return newtags
         
-    def print_single(self, out_type=None, pdf=False):
+    def print_single(self, out_type, pdf=False):
         """Print or save the tex file for each element
 
         :param str out_type: parameter to choose the method and the name of the
-                           output file
+                             output file
         :param bool pdf: convert the tex files to pdf
         """
         template = self.latex_jinja_env.get_template('single.tex')
@@ -85,9 +86,7 @@ class CaiOsmReport:
             if 'ref' not in ele.keys():
                 print("Relazione con id {} non ha il campo ref".format(ele['id']))
                 continue
-            if not out_type:
-                outfile = sys.stdout
-            elif out_type == 'REF':
+            if out_type == 'REF':
                 outname = 'sentiero_{}.tex'. format(ele['ref'])
                 outfile = open(os.path.join(self.output_dir, outname), 'w')
             elif out_type == 'NAME':
@@ -98,11 +97,11 @@ class CaiOsmReport:
             tags = self._clean_tags(ele)
             outext = template.render(tags=tags)
             outfile.write(outext)
-            if outfile.name != '<stdout>':
-                outfile.close()
+            outfile.close()
             # create the pdf
             if pdf:
                 self._create_pdf(outfile.name)
+        return 0
     
     def write_book(self, output, out_type, pdf=False):
         """Write all the relations in one document
@@ -145,5 +144,6 @@ class CaiOsmReport:
         # convert to PDF
         if pdf:
             self._create_pdf(outfile.name)
+        return 0
         
 
