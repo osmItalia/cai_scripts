@@ -15,6 +15,19 @@ import shutil
 # full path of the file, used to get directory for latex templates
 DIRFILE = os.path.dirname(os.path.realpath(__file__))
 
+def clean_tags(tags):
+    """Clean tags removed strange "strange" characters like :
+
+    :param dict tags: the tags dictionary
+    """
+    newtags = {}
+    for k in tags.keys():
+        if ':' in k:
+            newtags[k.replace(':','')] = tags[k]
+        else:
+            newtags[k] = tags[k]
+    return newtags
+
 class CaiOsmReport:
     
     def __init__(self, myjson, output_dir='.'):
@@ -74,15 +87,6 @@ class CaiOsmReport:
             raise ValueError('Error {} executing command: {}'.format(retcode,
                                                                      cmd))
         return 0
-
-    def _clean_tags(self, tags):
-        newtags = {}
-        for k in tags.keys():
-            if ':' in k:
-                newtags[k.replace(':','')] = tags[k]
-            else:
-                newtags[k] = tags[k]
-        return newtags
         
     def print_single(self, out_type='REF', pdf=False):
         """Print or save the tex file for each element
@@ -105,7 +109,7 @@ class CaiOsmReport:
                 outfile = open(os.path.join(self.output_dir, outname), 'w')
             else:
                 raise ValueError("output value options are: REF and NAME")
-            tags = self._clean_tags(ele)
+            tags = clean_tags(ele)
             outext = template.render(tags=tags)
             outfile.write(outext)
             outfile.close()
@@ -133,7 +137,7 @@ class CaiOsmReport:
             outname = 'testo_{}.tex'. format(name)
             refs.append(name)
             outfile = open(os.path.join(self.output_dir, outname), 'w')
-            tags = self._clean_tags(ele)
+            tags = clean_tags(ele)
             outext = template.render(tags=tags)
             outfile.write(outext)
             outfile.close()
