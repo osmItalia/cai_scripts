@@ -73,7 +73,7 @@ class CaiOsmReport:
                 newtags[k] = tags[k]
         return newtags
         
-    def print_single(self, out_type, pdf=False):
+    def print_single(self, out_type='REF', pdf=False):
         """Print or save the tex file for each element
 
         :param str out_type: parameter to choose the method and the name of the
@@ -103,10 +103,10 @@ class CaiOsmReport:
                 self._create_pdf(outfile.name)
         return 0
     
-    def write_book(self, output, out_type, pdf=False):
+    def write_book(self, output, pdf=False):
         """Write all the relations in one document
         
-        :param str output:
+        :param str output: output file name with tex extension
         :param str out_type: parameter to choose the method and the name of the
                            output file
         :param bool pdf: convert the tex files to pdf
@@ -118,18 +118,10 @@ class CaiOsmReport:
             if 'ref' not in ele.keys():
                 print("Relazione con id {} non ha il campo ref".format(ele['id']))
                 continue
-            if out_type == 'REF':
-                name = ele['ref']
-                outname = 'testo_{}.tex'. format(name)
-                refs.append(name)
-                outfile = open(os.path.join(self.output_dir, outname), 'w')
-            elif out_type == 'NAME':
-                name = ele['name'].replace(' ', '_')
-                outname = '{}.tex'. format(name)
-                refs.append(name)
-                outfile = open(os.path.join(self.output_dir, outname), 'w')
-            else:
-                raise ValueError("output value options are: REF and NAME")
+            name = ele['ref']
+            outname = 'testo_{}.tex'. format(name)
+            refs.append(name)
+            outfile = open(os.path.join(self.output_dir, outname), 'w')
             tags = self._clean_tags(ele)
             outext = template.render(tags=tags)
             outfile.write(outext)
