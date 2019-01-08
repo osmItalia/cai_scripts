@@ -10,6 +10,10 @@ import jinja2
 import os
 import sys
 from subprocess import Popen, PIPE
+import shutil
+
+# full path of the file, used to get directory for latex templates
+DIRFILE = os.path.dirname(os.path.realpath(__file__))
 
 class CaiOsmReport:
     
@@ -33,8 +37,10 @@ class CaiOsmReport:
             line_comment_prefix = '%#',
             trim_blocks = True,
             autoescape = False,
-            loader = jinja2.FileSystemLoader(os.path.abspath('./latex_template'))
+            loader = jinja2.FileSystemLoader(os.path.join(DIRFILE,
+                                                          'latex_template'))
         )
+        # check if output directory exists and it is writable
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
             self.output_dir = os.path.abspath(output_dir)
@@ -53,11 +59,13 @@ class CaiOsmReport:
 
         :param str infile: path to input tex file
         """
+        # check if pdflatex is installed
         if shutil.which('pdflatex'):
             cmd = 'pdflatex -interaction=nonstopmode -output-directory={di}' \
                   ' {inf}'.format(di=self.output_dir, inf=infile)
         else:
-            raise Exception("pdflatex not found")
+            raise Exception("pdflatex not found. Please install it to get PDF"
+                            " files")
         proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE )
         out, err = proc.communicate()
         retcode = proc.returncode
