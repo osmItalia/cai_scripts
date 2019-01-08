@@ -106,7 +106,7 @@ class CaiOsmReport:
     def write_book(self, output, pdf=False):
         """Write all the relations in one document
         
-        :param str output: output file name with tex extension
+        :param str output: output file name without extension
         :param str out_type: parameter to choose the method and the name of the
                            output file
         :param bool pdf: convert the tex files to pdf
