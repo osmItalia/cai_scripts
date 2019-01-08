@@ -5,6 +5,22 @@ To get more info about the collaboration between CAI and OSM read https://wiki.o
 How to use
 ==========
 
+Command Line tool
+-----------------
+
+`caiosm` is a great tool to get data or print routes info in several format
+
+.. code-block:: bash
+
+    # print Mezzocorona routes in mediawiki table
+    caiosm --place Mezzocorona -w
+
+    # get a PDF file (the name will be ischia.pdf) with all the info of Ischia's routes
+    caiosm --box 40.643656594949,13.76106262207,40.818226355892,14.062843322754 -p ischia
+
+    # for more info
+    caiosm --help
+
 Library
 -------
 
