@@ -45,7 +45,7 @@ def main():
     elif args.place:
         cod = CaiOsmData(area=args.place)
     elif args.box:
-        cod = CaiOsmData(area=args.box)
+        cod = CaiOsmData(bbox=args.box)
     
     if args.pdf:
         tags = cod.get_tags_json()
