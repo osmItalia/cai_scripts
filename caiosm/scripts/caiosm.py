@@ -37,34 +37,35 @@ def main():
     
     
     args = parser.parse_args()
-    
-    if not args['place'] and not ['box']:
+
+    if not args.place and not args.box:
         raise ValueError("one between --place or --box options is required")
-    elif args['place'] and ['box']:
+    elif args.place and args.box:
         raise ValueError("Please select only one between --place and --box")
-    elif args['place']:
-        cod = CaiOsmData(area=args['place'])
-    elif args['box']:
-        cod = CaiOsmData(area=args['box'])
+    elif args.place:
+        cod = CaiOsmData(area=args.place)
+    elif args.box:
+        cod = CaiOsmData(area=args.box)
     
-    if args['pdf']:
+    if args.pdf:
         tags = cod.get_tags_json()
         cor = CaiOsmReport(tags)
-        cor.write_book(args['p'], True)
-    if args['wiki']:
+        cor.write_book(args.pdf, True)
+    if args.wiki:
         print(cod.wiki_table())
         print("")
-    if args['wikiwrite']:
-        cod.write(args['wikiwrite'],'wiki')
-    if args['csv']:
+    if args.wikiwrite:
+        cod.write(args.wikiwrite,'wiki')
+    if args.csv:
         print(cod.get_data_csv())
         print("")
-    if args['csvwrite']:
-        cod.write(args['csvwrite'], 'csv')
-    if args['osmwrite']:
-        cod.write(args['osmwrite'], 'osm')
-    if args['json']:
+    if args.csvwrite:
+        cod.write(args.csvwrite, 'csv')
+    if args.osmwrite:
+        cod.write(args.osmwrite, 'osm')
+    if args.json:
         print(cod.get_tags_json())
         print("")
-    if args['jsonwrite']:
-        cod.write(args['jsonwrite'], 'tags')
+    if args.jsonwrite:
+        cod.write(args.jsonwrite, 'tags')
+
