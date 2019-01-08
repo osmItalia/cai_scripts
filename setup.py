@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 
@@ -11,7 +12,7 @@ setup(
     description="Tools to work with Club Alpino Italiano OpenStreetMap data",
     keywords="Club Alpino Italiano,CAI,OpenStreetMap,OSM",
     packages=find_packages(),
-    include_package_data=False,
+    include_package_data=True,
     install_requires=open('requirements.txt').read().splitlines(),
     long_description=long_description,
     author='Luca Delucchi',
@@ -19,6 +20,6 @@ setup(
     license='GPLv3+',
     entry_points="""
     [console_scripts]
-    caisom=caiosm.scripts.caiosm:main
+    caiosm=caiosm.scripts.caiosm:main
     """
 )
