@@ -12,13 +12,13 @@ import urllib.request
 
 class CaiOsmData:
     
-    def __init__(self, area=None, bbox=None, outtype='csv'):
+    def __init__(self, area=None, bbox=None, outtype='csv', separator='|'):
         self.area = area
         self.bbox = bbox
         self.outtype = outtype
         self.url = "http://overpass-api.de/api/interpreter?"
         self.csvheader = False
-        self.separator = '|'
+        self.separator = separator
 
 
     def _get_data(self, instr):
