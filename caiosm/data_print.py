@@ -53,8 +53,11 @@ class CaiOsmReport:
 
         :param str infile: path to input tex file
         """
-        cmd = 'pdflatex -interaction=nonstopmode -output-directory={di} {inf}'.format(
-               di=self.output_dir, inf=infile)
+        if shutil.which('pdflatex'):
+            cmd = 'pdflatex -interaction=nonstopmode -output-directory={di}' \
+                  ' {inf}'.format(di=self.output_dir, inf=infile)
+        else:
+            raise Exception("pdflatex not found")
         proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE )
         out, err = proc.communicate()
         retcode = proc.returncode
