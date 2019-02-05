@@ -10,11 +10,24 @@ import sys
 import json
 import urllib.request
 
+def invert_bbox(bbox):
+    """Convert the bounding box from XMIN,YMIN,XMAX,YMAX to YMIN,XMIN,YMAX,XMAX
+
+    :param str box: the string of the bounding box comma separated
+    """
+    l = bbox.split(',')
+    return "{ymi},{xmi},{yma},{xma}".format(ymi=l[1], xmi=l[0], yma=l[3],
+                                            xma=l[2])
+
 class CaiOsmData:
-    
-    def __init__(self, area=None, bbox=None, outtype='csv', separator='|'):
+
+    def __init__(self, area=None, bbox=None, bbox_inverted=False,
+                 outtype='csv', separator='|'):
         self.area = area
-        self.bbox = bbox
+        if bbox_inverted:
+            self.bbox = invert_bbox(bbox)
+        else:
+            self.bbox = bbox
         self.outtype = outtype
         self.url = "http://overpass-api.de/api/interpreter?"
         self.csvheader = False
@@ -32,9 +45,9 @@ class CaiOsmData:
         req = urllib.request.Request(self.url, data)
         resp = urllib.request.urlopen(req)
         respData = resp.read()
-        
+
         return respData.decode(encoding='utf-8',errors='ignore')
-        
+
 
     def get_data_csv(self, csvheader=False, tags='::id,"name","ref"'):
         """Function to return data in CSV format
@@ -53,7 +66,7 @@ relation
   ["cai_scale"]
   ({bbox});
 out;"""
-    
+
         if self.area:
             instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
                                 bbox='area.a',
@@ -67,7 +80,7 @@ out;"""
                                 cols=tags)
         else:
             raise ValueError('One of area or box argument should be used')
-            
+
         return self._get_data(instr)
 
 
@@ -85,7 +98,7 @@ out;
 >;
 out skel qt;
 out;"""
-    
+
         if self.area:
             instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
                                 bbox='area.a')
@@ -93,7 +106,7 @@ out;"""
             instr = temp.format(area='', bbox=self.bbox)
         else:
             raise ValueError('One of area or box argument should be used')
-            
+
         return self._get_data(instr)
 
 
@@ -143,16 +156,21 @@ out skel qt;"""
         """Function to convert a CSV file to a wiki table.
         Original code from https://github.com/dlink/vbin/blob/master/csv2wiki
         """
-        data = self.get_data_csv()
+        data = self.get_data_csv(tags='"ref","name",::id')
         # read it
-        
+
         rows = data.splitlines()
         table = []
         for fields in rows:
             row = []
+            x = 0
             for field in fields.split(self.separator):
                 field = field.strip()
-                row.append(field)
+                if x == 2:
+                    row.append("{{BrowseRelation|" + field + "}}")
+                else:
+                    row.append(field)
+                x += 1
             row.extend(['', ''])
             table.append(row)
         # output wiki format
@@ -160,16 +178,17 @@ out skel qt;"""
         out += '|-\n'
         out += '!Ref\n!Nome\n!Link route\n!%completamento\n!note\n'
         i = 0
-        for row in sorted(table, key=lambda row: row[2]):
+        for row in sorted(table, key=lambda row: row[0]):
             i += 1
             if i == 1 and self.csvheader:
                 continue
             else:
                 delim = '|'
                 out += "|-\n"
+
             out += '\n'.join(["%s%s" % (delim, x) for x in row])
             out += '\n'
-        
+
         out += "|-\n|}\n"
         return out
 
