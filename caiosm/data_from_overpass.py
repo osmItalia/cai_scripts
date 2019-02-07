@@ -247,11 +247,16 @@ out skel qt;"""
         out += "|-\n|}\n"
         return out
 
-    def geojson(self, osmfile):
+    def get_geojson(self):
         """Function to create a GeoJSON object"""
+        osm = self.get_data_osm()
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
+            fi.write(osm)
         cch = CaiCounterHandler()
-        cch.apply_file(osmfile, locations=True)
+        cch.apply_file(fi.name, locations=True)
         cch.create_geojson()
+        os.remove(fi.name)
         return cch.gjson
 
     def write(self, to, out_format):
@@ -271,17 +276,13 @@ out skel qt;"""
         elif out_format == 'tags':
             data = self.get_tags_json()
         elif out_format == 'geojson':
-            osm = self.get_data_osm()
-            import tempfile
-            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
-                fi.write(osm)
-            data = self.geojson(fi.name)
+            data = self.get_geojson()
             with open(to, 'w') as f:
                 geojson.dump(data, f)
-            os.remove(fi.name)
             return True
         else:
             raise ValueError('Only csv, osm, wikitable, json, tags format are '
                              'supported')
         with open(to, 'w') as fil:
             fil.write(data)
+        return True
