@@ -29,12 +29,12 @@ def clean_tags(tags):
     return newtags
 
 class CaiOsmReport:
-    
+
     def __init__(self, myjson, output_dir='.'):
         """Class to print relation info into
-        
+
         :param obj myjson: json containg tags and id of a list of relations, it
-                           is possible to get it from 
+                           is possible to get it from
                            data_from_overpass - CaiOsmData - get_tags_json
         :param str output_dir: the directory where save the output file
         """
@@ -66,7 +66,7 @@ class CaiOsmReport:
             except:
                 raise Exception("Folder to store output files does not "
                                 "exist or is not writeable")
-    
+
     def _create_pdf(self, infile):
         """Private function to convert tex file to pdf
 
@@ -87,7 +87,7 @@ class CaiOsmReport:
             raise ValueError('Error {} executing command: {}'.format(retcode,
                                                                      cmd))
         return 0
-        
+
     def print_single(self, out_type='REF', pdf=False):
         """Print or save the tex file for each element
 
@@ -117,10 +117,10 @@ class CaiOsmReport:
             if pdf:
                 self._create_pdf(outfile.name)
         return 0
-    
-    def write_book(self, output, pdf=False):
+
+    def write_book(self, output, pdf=False, remove=True):
         """Write all the relations in one document
-        
+
         :param str output: output file name without extension
         :param str out_type: parameter to choose the method and the name of the
                            output file
@@ -128,22 +128,25 @@ class CaiOsmReport:
         """
         template = self.latex_jinja_env.get_template('simple.tex')
         refs = []
+        outfiles = []
         # create the single document for each relation
         for ele in self.json:
             if 'ref' not in ele.keys():
                 print("Relazione con id {} non ha il campo ref".format(ele['id']))
                 continue
-            name = ele['ref']
+            name = ele['id']
             outname = 'testo_{}.tex'. format(name)
             refs.append(name)
-            outfile = open(os.path.join(self.output_dir, outname), 'w')
+            path = os.path.join(self.output_dir, outname)
+            outfile = open(path, 'w')
             tags = clean_tags(ele)
             outext = template.render(tags=tags)
             outfile.write(outext)
             outfile.close()
+            outfiles.append(path)
         # create the final document including the tex file previously created
         template = self.latex_jinja_env.get_template('document.tex')
-        refs.sort()
+        #refs.sort()
         outext = template.render(refs=refs)
         outfile = open(os.path.join(self.output_dir, output), 'w')
         outfile.write(outext)
@@ -151,6 +154,10 @@ class CaiOsmReport:
         # convert to PDF
         if pdf:
             self._create_pdf(outfile.name)
+        if remove:
+            for ref in outfiles:
+                os.remove(ref)
+                os.remove(ref.replace('.tex', '.aux'))
         return 0
-        
+
 
