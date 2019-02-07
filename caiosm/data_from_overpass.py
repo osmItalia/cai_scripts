@@ -5,10 +5,13 @@ Created on Thu Dec 13 07:28:20 2018
 
 @author: lucadelu
 """
-
-import sys
+import os
 import json
 import urllib.request
+import osmium
+import shapely.wkt as wktlib
+from shapely.geometry import MultiLineString
+import geojson
 
 def invert_bbox(bbox):
     """Convert the bounding box from XMIN,YMIN,XMAX,YMAX to YMIN,XMIN,YMAX,XMAX
@@ -19,10 +22,60 @@ def invert_bbox(bbox):
     return "{ymi},{xmi},{yma},{xma}".format(ymi=l[1], xmi=l[0], yma=l[3],
                                             xma=l[2])
 
+WKTFAB = osmium.geom.WKTFactory()
+
+class CaiCounterHandler(osmium.SimpleHandler):
+    """Class to parse CAI routes from OSM file"""
+    def __init__(self):
+        osmium.SimpleHandler.__init__(self)
+        self.count = 0
+        self.routes = {}
+        self.ways = {}
+        self.gjson = None
+
+    def way(self, way):
+        """Function to parse ways"""
+        self.ways[way.id] = WKTFAB.create_linestring(way)
+
+    def relation(self, rel):
+        """Function to parse relations"""
+        members = []
+        tags = {}
+        for mem in rel.members:
+            if mem.type == 'w':
+                members.append(mem.ref)
+        for t in rel.tags:
+            tags[t.k] = t.v
+        self.count += 1
+        self.routes[rel.id] = {'tags': tags, 'elems': members}
+
+    def create_geojson(self):
+        """Function to create geometries for routes and GeoJSON object"""
+        features = []
+        for k, v in self.routes.items():
+            lines = []
+            for w in v['elems']:
+                lines.append(wktlib.loads(self.ways[w]))
+            geom = MultiLineString(lines)
+            self.routes[k]['geom'] = geom
+            feat = geojson.Feature(geometry=geom,
+                                   properties=self.routes[k]['tags'])
+            features.append(feat)
+        self.gjson = geojson.FeatureCollection(features)
+
+    def write_geojson(self, to):
+        """Function to write GeoJSON file
+
+        :param str to: the path to the output file
+        """
+        with open(to, 'w') as f:
+            geojson.dump(self.gjson, f)
+
+
 class CaiOsmData:
 
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
-                 outtype='csv', separator='|'):
+                 outtype='csv', separator='|', debug=False):
         self.area = area
         if bbox_inverted:
             self.bbox = invert_bbox(bbox)
@@ -32,6 +85,7 @@ class CaiOsmData:
         self.url = "http://overpass-api.de/api/interpreter?"
         self.csvheader = False
         self.separator = separator
+        self.debug = debug
 
 
     def _get_data(self, instr):
@@ -39,14 +93,15 @@ class CaiOsmData:
 
         :param str instr: the string with the overpass syntax
         """
+        if self.debug:
+            print(instr)
         values = {'data': instr}
         data = urllib.parse.urlencode(values)
         data = data.encode('utf-8') # data should be bytes
         req = urllib.request.Request(self.url, data)
         resp = urllib.request.urlopen(req)
         respData = resp.read()
-
-        return respData.decode(encoding='utf-8',errors='ignore')
+        return respData.decode(encoding='utf-8', errors='ignore')
 
 
     def get_data_csv(self, csvheader=False, tags='::id,"name","ref"'):
@@ -192,6 +247,12 @@ out skel qt;"""
         out += "|-\n|}\n"
         return out
 
+    def geojson(self, osmfile):
+        """Function to create a GeoJSON object"""
+        cch = CaiCounterHandler()
+        cch.apply_file(osmfile, locations=True)
+        cch.create_geojson()
+        return cch.gjson
 
     def write(self, to, out_format):
         """Write the data obtained in different format into a file
@@ -209,9 +270,18 @@ out skel qt;"""
             data = self.get_data_json()
         elif out_format == 'tags':
             data = self.get_tags_json()
+        elif out_format == 'geojson':
+            osm = self.get_data_osm()
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
+                fi.write(osm)
+            data = self.geojson(fi.name)
+            with open(to, 'w') as f:
+                geojson.dump(data, f)
+            os.remove(fi.name)
+            return True
         else:
             raise ValueError('Only csv, osm, wikitable, json, tags format are '
                              'supported')
-        fil = open(to, 'w')
-        fil.write(data)
-        fil.close()
+        with open(to, 'w') as fil:
+            fil.write(data)
