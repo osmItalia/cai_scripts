@@ -22,6 +22,12 @@ def invert_bbox(bbox):
     return "{ymi},{xmi},{yma},{xma}".format(ymi=l[1], xmi=l[0], yma=l[3],
                                             xma=l[2])
 
+def check_network(net):
+    if net in ['lwn', 'rwn', 'nwn', 'iwn']:
+        return '["network"="{}"]'.format(net)
+    else:
+        return ''
+
 WKTFAB = osmium.geom.WKTFactory()
 
 class CaiCounterHandler(osmium.SimpleHandler):
@@ -46,6 +52,7 @@ class CaiCounterHandler(osmium.SimpleHandler):
                 members.append(mem.ref)
         for t in rel.tags:
             tags[t.k] = t.v
+        tags['id'] = rel.id
         self.count += 1
         self.routes[rel.id] = {'tags': tags, 'elems': members}
 
@@ -104,7 +111,8 @@ class CaiOsmData:
         return respData.decode(encoding='utf-8', errors='ignore')
 
 
-    def get_data_csv(self, csvheader=False, tags='::id,"name","ref"'):
+    def get_data_csv(self, csvheader=False, tags='::id,"name","ref"',
+                     network='lwn'):
         """Function to return data in CSV format
 
         :param bool csvheader: show or hide the csv header, default hidden
@@ -117,19 +125,19 @@ class CaiOsmData:
 {area}
 relation
   ["route"="hiking"]
-  ["network"="lwn"]
+  {netw}
   ["cai_scale"]
   ({bbox});
 out;"""
-
+        network = check_network(network)
         if self.area:
             instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
-                                bbox='area.a',
+                                bbox='area.a', netw=network,
                                 csvh=str(self.csvheader).lower(),
                                 sep=self.separator,
                                 cols=tags)
         elif self.bbox:
-            instr = temp.format(area='', bbox=self.bbox,
+            instr = temp.format(area='', bbox=self.bbox, netw=network,
                                 csvh=str(self.csvheader).lower(),
                                 sep=self.separator,
                                 cols=tags)
@@ -139,14 +147,14 @@ out;"""
         return self._get_data(instr)
 
 
-    def get_data_osm(self):
+    def get_data_osm(self, network='lwn'):
         """Function to return data in the original OSM format"""
         temp = """[out:xml]
 ;
 {area}
 relation
   ["route"="hiking"]
-  ["network"="lwn"]
+  {netw}
   ["cai_scale"]
   ({bbox});
 out;
@@ -154,45 +162,47 @@ out;
 out skel qt;
 out;"""
 
+        network = check_network(network)
         if self.area:
             instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
-                                bbox='area.a')
+                                netw=network, bbox='area.a')
         elif self.bbox:
-            instr = temp.format(area='', bbox=self.bbox)
+            instr = temp.format(area='', netw=network, bbox=self.bbox)
         else:
             raise ValueError('One of area or box argument should be used')
 
         return self._get_data(instr)
 
 
-    def get_data_json(self):
+    def get_data_json(self, network='lwn'):
         """Function to return the OSM data in JSON formats"""
         temp = """[out:json]
 ;
 {area}
 relation
   ["route"="hiking"]
-  ["network"="lwn"]
+  {netw}
   ["cai_scale"]
   ({bbox});
 out;
 >;
 out skel qt;"""
 
+        network = check_network(network)
         if self.area:
             instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
-                                bbox='area.a')
+                                netw=network, bbox='area.a')
         elif self.bbox:
-            instr = temp.format(area='', bbox=self.bbox)
+            instr = temp.format(area='', netw=network, bbox=self.bbox)
         else:
             raise ValueError('One of area or box argument should be used')
 
         return json.loads(self._get_data(instr))
 
 
-    def get_tags_json(self, debug=False):
+    def get_tags_json(self, debug=False, network='lwn'):
         """Function to get the tags plus id for CAI relations"""
-        data = self.get_data_json()
+        data = self.get_data_json(network=network)
         tags = []
         for elem in data['elements']:
             #check if the element is a relation
@@ -207,11 +217,11 @@ out skel qt;"""
         return tags
 
 
-    def wiki_table(self):
+    def wiki_table(self, network=False):
         """Function to convert a CSV file to a wiki table.
         Original code from https://github.com/dlink/vbin/blob/master/csv2wiki
         """
-        data = self.get_data_csv(tags='"ref","name",::id')
+        data = self.get_data_csv(tags='"ref","name",::id', network=network)
         # read it
 
         rows = data.splitlines()
@@ -247,9 +257,9 @@ out skel qt;"""
         out += "|-\n|}\n"
         return out
 
-    def get_geojson(self):
+    def get_geojson(self, network=False):
         """Function to create a GeoJSON object"""
-        osm = self.get_data_osm()
+        osm = self.get_data_osm(network=network)
         import tempfile
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
             fi.write(osm)
@@ -259,24 +269,24 @@ out skel qt;"""
         os.remove(fi.name)
         return cch.gjson
 
-    def write(self, to, out_format):
+    def write(self, to, out_format, network=False):
         """Write the data obtained in different format into a file
 
         :param str to: the path to the output file
         :param str out_format: the required output format
         """
         if out_format == 'csv':
-            data = self.get_data_csv()
+            data = self.get_data_csv(network=network)
         elif out_format == 'osm':
-            data = self.get_data_osm()
+            data = self.get_data_osm(network=network)
         elif out_format == 'wikitable':
-            data = self.wiki_table()
+            data = self.wiki_table(network=network)
         elif out_format == 'json':
-            data = self.get_data_json()
+            data = self.get_data_json(network=network)
         elif out_format == 'tags':
-            data = self.get_tags_json()
+            data = self.get_tags_json(network=network)
         elif out_format == 'geojson':
-            data = self.get_geojson()
+            data = self.get_geojson(network=network)
             with open(to, 'w') as f:
                 geojson.dump(data, f)
             return True
