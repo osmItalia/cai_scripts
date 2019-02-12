@@ -1,49 +1,58 @@
-\begin{flushright}
-	\BLOCK{ if tags.name }
-	\textbf{\VAR{tags.name}}
-	\BLOCK{ endif }
+\begin{minipage}{0.4\textwidth}
+    \begin{flushleft} \large
+        \BLOCK{ if tags.name }
+        \textbf{\VAR{tags.name}}
+        \newline
+        \BLOCK{ endif }
 
-	\begin{tikzpicture}
-	\draw [fill=red] (0, 0) rectangle (1, 1);
-	\draw [fill=white] (1, 0) rectangle (2.5, 1) node[pos=.5] { \VAR{tags.ref} };
-	\draw [fill=red] (2.5, 0) rectangle (3.5, 1);
-	\end{tikzpicture}
-	
-	\VAR{tags.cai_scale}
-	\BLOCK{ if tags.old_ref }
-	(\VAR{tags.old_ref}})
-	\BLOCK{ endif }
-	
-	\BLOCK{ if tags.rwnname }
-	\VAR{tags.rwnname}
-	\BLOCK{ endif }
-	
-	\BLOCK{ if tags.refREI }
-	\VAR{tags.refREI}
-	\BLOCK{ endif }	
-	
-	\BLOCK{ if tags.network == 'lwn' }
-	\tiny{Sentiero locale}
-	\BLOCK{ elif tags.network == 'rwn' }
-	\tiny{Sentiero regionale}
-	\BLOCK{ elif tags.network == 'nwn' }
-	\tiny{Sentiero nazionale}
-	\BLOCK{ elif tags.network == 'iwn' }
-	\tiny{Sentiero internazionale}
-	\BLOCK{ endif }
-\end{flushright}
-\textit{
-\BLOCK{ if tags.from }
-\VAR{tags.from} 
-\BLOCK{ endif }
-\BLOCK{ if tags.to }
-- \VAR{tags.to}
-\BLOCK{ endif }
-}
-\bigskip
+        \begin{tikzpicture}
+        \draw [fill=red] (0, 0) rectangle (1, 1);
+        \draw [fill=white] (1, 0) rectangle (2.5, 1) node[pos=.5] { \VAR{tags.ref} };
+        \draw [fill=red] (2.5, 0) rectangle (3.5, 1);
+        \end{tikzpicture}
+
+        \VAR{tags.cai_scale}
+        \BLOCK{ if tags.old_ref }
+        (\VAR{tags.old_ref})
+        \BLOCK{ endif }
+
+        \BLOCK{ if tags.rwnname }
+        \VAR{tags.rwnmane}
+        \BLOCK{ endif }
+
+        \BLOCK{ if tags.refREI }
+        \VAR{tags.refREI}
+        \BLOCK{ endif }
+
+        \BLOCK{ if tags.network == 'lwn' }
+        \tiny{Sentiero locale}
+        \BLOCK{ elif tags.network == 'rwn' }
+        \tiny{Sentiero regionale}
+        \BLOCK{ elif tags.network == 'nwn' }
+        \tiny{Sentiero nazionale}
+        \BLOCK{ elif tags.network == 'iwn' }
+        \tiny{Sentiero internazionale}
+        \BLOCK{ endif }
+
+        \newline
+        \BLOCK{ if tags.from }
+        \small{\VAR{tags.from}}
+        \BLOCK{ endif }
+        \BLOCK{ if tags.to }
+        - \small{\VAR{tags.to}}
+        \BLOCK{ endif }
+    \end{flushleft}
+\end{minipage}
+\begin{minipage}{0.6\textwidth}
+    \begin{flushright}
+        \BLOCK{ if geom }
+        \includegraphics[width=\VAR{ratio}\textwidth]{\VAR{image}}
+        \BLOCK{ endif }
+    \end{flushright}
+\end{minipage}
 
 \section*{Informazioni sul sentiero}
-\begin{tabular}{lp{0.8\textwidth}}
+\begin{tabular}{l p{0.8\textwidth}}
 	\BLOCK{ if tags.distance }
 	Distanza: & \VAR{tags.distance} Km \\
 	\BLOCK{ else }
@@ -52,15 +61,15 @@
 	Durata andata: & \VAR{tags.durationforward} \\
 	Durata ritorno: & \VAR{tags.durationbackward} \\
 	\BLOCK{ if tags.ascent }
-	Dislivello positivo & \VAR{tags.ascent} m \\
+	Dislivello positivo: & \VAR{tags.ascent} m \\
 	\BLOCK{ else }
-	Dislivello positivo &  \\
+	Dislivello positivo: &  \\
 	\BLOCK{ endif }
 	\BLOCK{ if tags.descent }
-	Dislivello negativo & \VAR{tags.descent} m \\
+	Dislivello negativo: & \VAR{tags.descent} m \\
 	\BLOCK{ else }
-	Dislivello negativo & \\
-	\BLOCK{ endif }	
+	Dislivello negativo: & \\
+	\BLOCK{ endif }
 	\BLOCK{ if tags.descriptionit }
 	Descrizione: &  \VAR{tags.descriptionit} \\
 	\BLOCK{ else }
@@ -74,7 +83,7 @@
 \end{tabular}
 
 \section*{Informazioni mantenimento}
-\begin{tabular}{lp{0.8\textwidth}}
+\begin{tabular}{l p{0.8\textwidth}}
 	Sorgente: & \VAR{tags.source} \\
 	Data rilievo: & \VAR{tags.sourveydate} \\
 	Operatore: & \VAR{tags.operator} \\
@@ -96,5 +105,5 @@
 	\BLOCK{ if tags.website }
 	\url{\VAR{tags.website}}
 	\BLOCK{ endif }
-	\url{https://www.openstreetmap.org/relation/\VAR{tags.id}}	
+	\url{https://www.openstreetmap.org/relation/\VAR{tags.id}}
 \end{flushright}
