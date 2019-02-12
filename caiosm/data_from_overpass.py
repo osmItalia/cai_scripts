@@ -23,10 +23,13 @@ def invert_bbox(bbox):
                                             xma=l[2])
 
 def check_network(net):
+    """Check if network is set
+
+    :param str net: the network code
+    """
     if net in ['lwn', 'rwn', 'nwn', 'iwn']:
         return '["network"="{}"]'.format(net)
-    else:
-        return ''
+    return ''
 
 WKTFAB = osmium.geom.WKTFactory()
 
@@ -70,25 +73,34 @@ class CaiCounterHandler(osmium.SimpleHandler):
             features.append(feat)
         self.gjson = geojson.FeatureCollection(features)
 
-    def write_geojson(self, to):
+    def write_geojson(self, out):
         """Function to write GeoJSON file
 
-        :param str to: the path to the output file
+        :param str out: the path to the output file
         """
-        with open(to, 'w') as f:
+        with open(out, 'w') as f:
             geojson.dump(self.gjson, f)
 
 
 class CaiOsmData:
 
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
-                 outtype='csv', separator='|', debug=False):
+                 separator='|', debug=False):
+        """Class to get CAI data using Overpass API
+
+        :param str area: the name of the area of interest
+        :param str bbox: a string with the bounding box of the area, needed
+                         format is YMIN,XMIN,YMAX,XMAX
+        :param bool bbox_inverted: set True id the bbox format is
+                                    XMIN,YMIN,XMAX,YMAX
+        :param str separator: the separator to use for CSV
+        :param bool debug: print debug information
+        """
         self.area = area
         if bbox_inverted:
             self.bbox = invert_bbox(bbox)
         else:
             self.bbox = bbox
-        self.outtype = outtype
         self.url = "http://overpass-api.de/api/interpreter?"
         self.csvheader = False
         self.separator = separator
@@ -269,10 +281,10 @@ out skel qt;"""
         os.remove(fi.name)
         return cch.gjson
 
-    def write(self, to, out_format, network=False):
+    def write(self, out, out_format, network=False):
         """Write the data obtained in different format into a file
 
-        :param str to: the path to the output file
+        :param str out: the path to the output file
         :param str out_format: the required output format
         """
         if out_format == 'csv':
@@ -287,12 +299,12 @@ out skel qt;"""
             data = self.get_tags_json(network=network)
         elif out_format == 'geojson':
             data = self.get_geojson(network=network)
-            with open(to, 'w') as f:
+            with open(out, 'w') as f:
                 geojson.dump(data, f)
             return True
         else:
             raise ValueError('Only csv, osm, wikitable, json, tags format are '
                              'supported')
-        with open(to, 'w') as fil:
+        with open(out, 'w') as fil:
             fil.write(data)
         return True
