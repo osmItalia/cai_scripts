@@ -117,6 +117,19 @@ def create_map(geom, out):
         os.remove(tmpto)
         return True
 
+def _run_cmd(cmd):
+    """Run a command and check if the output it is fine
+
+    :param str cmd:
+    """
+    proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate()
+    retcode = proc.returncode
+    if retcode > 1:
+        raise ValueError('Error {} executing command: {}'.format(retcode,
+                                                                 cmd))
+    return True
+
 class CaiOsmReport:
 
     def __init__(self, myjson, geo=False, output_dir='.'):
@@ -161,26 +174,37 @@ class CaiOsmReport:
                 raise Exception("Folder to store output files does not "
                                 "exist or is not writeable")
 
-    def _create_pdf(self, infile):
+    def _create_pdf(self, infile, optimize=True):
         """Private function to convert tex file to pdf
 
         :param str infile: path to input tex file
+        :param bool optimize: Optimize the PDF to decrease the size
         """
         # check if pdflatex is installed
         if shutil.which('pdflatex'):
             cmd = 'pdflatex -interaction=nonstopmode -output-directory={di}' \
                   ' {inf}'.format(di=self.output_dir, inf=infile)
+
+            _run_cmd(cmd)
         else:
             raise Exception("pdflatex not found. Please install it to get PDF"
                             " files")
-        proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-        out, err = proc.communicate()
-        retcode = proc.returncode
-        if retcode != 0:
-            print(err)
-            raise ValueError('Error {} executing command: {}'.format(retcode,
-                                                                     cmd))
-        return 0
+
+        if optimize:
+            if shutil.which('gs'):
+                ori = os.path.join(self.output_dir, "{}.pdf".format(infile))
+                opti = os.path.join(self.output_dir,
+                                    "opti_{}.pdf".format(infile))
+                cmd = 'gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.5 ' \
+                      '-dNOPAUSE -dQUIET -dBATCH -sOutputFile="{ofile}" ' \
+                      '"{ifile}"'.format(ifile=ori, ofile=opti)
+                _run_cmd(cmd)
+                os.remove(ori)
+                shutil.move(opti, ori)
+            else:
+               raise Exception("gs not found. Please install Ghostscript to "
+                               "get PDF files")
+        return True
 
     def print_single(self, elem, out_type='REF', pdf=False,
                      intemp='single.tex'):
@@ -248,7 +272,7 @@ class CaiOsmReport:
         # for each relation create its own tex file
         for elem in self.json:
             self.print_single(elem, out_type, pdf)
-        return 0
+        return True
 
     def write_book(self, output, pdf=False, remove=True):
         """Write all the relations in one document
@@ -284,4 +308,4 @@ class CaiOsmReport:
                 os.remove(ref)
                 os.remove(ref.replace('.tex', '.aux'))
                 os.remove(ref.replace('.tex', '.png'))
-        return 0
+        return True
