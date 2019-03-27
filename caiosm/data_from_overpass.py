@@ -11,7 +11,10 @@ import urllib.request
 import osmium
 import shapely.wkt as wktlib
 from shapely.geometry import MultiLineString
+from shapely.ops import transform
 import geojson
+import pyproj
+from functools import partial
 
 def invert_bbox(bbox):
     """Convert the bounding box from XMIN,YMIN,XMAX,YMAX to YMIN,XMIN,YMAX,XMAX
@@ -41,6 +44,7 @@ class CaiCounterHandler(osmium.SimpleHandler):
         self.routes = {}
         self.ways = {}
         self.gjson = None
+        self.total = 0
 
     def way(self, way):
         """Function to parse ways"""
@@ -58,6 +62,22 @@ class CaiCounterHandler(osmium.SimpleHandler):
         tags['id'] = rel.id
         self.count += 1
         self.routes[rel.id] = {'tags': tags, 'elems': members}
+
+    def length(self, epsg="EPSG:3035"):
+        """Function to return the total lenght of routes"""
+        project = partial(pyproj.transform, pyproj.Proj(init='EPSG:4326'),
+                          pyproj.Proj(init=epsg))
+        alreadid = []
+        for k, v in self.routes.items():
+            lines = []
+            for w in v['elems']:
+                if w not in alreadid:
+                    lines.append(wktlib.loads(self.ways[w]))
+                    alreadid.append(w)
+            geom = MultiLineString(lines)
+            geomm = transform(project, geom)
+            self.total += geomm.length
+
 
     def create_geojson(self):
         """Function to create geometries for routes and GeoJSON object"""
@@ -105,6 +125,8 @@ class CaiOsmData:
         self.csvheader = False
         self.separator = separator
         self.debug = debug
+        self.cch = None
+        self.osm = None
 
 
     def _get_data(self, instr):
@@ -271,15 +293,32 @@ out skel qt;"""
 
     def get_geojson(self, network=False):
         """Function to create a GeoJSON object"""
-        osm = self.get_data_osm(network=network)
+        if not self.osm:
+            self.osm = self.get_data_osm(network=network)
         import tempfile
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
-            fi.write(osm)
-        cch = CaiCounterHandler()
-        cch.apply_file(fi.name, locations=True)
-        cch.create_geojson()
+            fi.write(self.osm)
+        if not self.cch:
+            self.cch = CaiCounterHandler()
+            self.cch.apply_file(fi.name, locations=True)
+        self.cch.create_geojson()
         os.remove(fi.name)
-        return cch.gjson
+        return self.cch.gjson
+
+    def get_length(self, network=False):
+        """Function to return the total lenght of data"""
+        if not self.osm:
+            self.osm = self.get_data_osm(network=network)
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
+            fi.write(self.osm)
+        if not self.cch:
+            self.cch = CaiCounterHandler()
+            self.cch.apply_file(fi.name, locations=True)
+        self.cch.length()
+        os.remove(fi.name)
+        return self.cch.total
+
 
     def write(self, out, out_format, network=False):
         """Write the data obtained in different format into a file
