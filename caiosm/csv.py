@@ -48,7 +48,7 @@ class CsvToWikiTable:
             if cod:
                 # could be done better, but format is easting {}
                 out += '| ' + cod + ' || || || {{Progress|0}} || \n'
-        out += '|-\n|}'
+        out += '|-\n|}\n'
         return out
         
     def sezioni_table(self, idcol, outdir=None, suffix=None):
