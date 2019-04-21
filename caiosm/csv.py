@@ -11,7 +11,10 @@ import pandas as pd
 
 class CsvToWikiTable:
     """Class to convert CSV file to wiki tables; the CSV needs an aggregation
-    column like the name of the different CAI groups (sezioni) or mountains"""
+    column like the name of the different CAI groups (sezioni) or mountains
+
+    Good idea is to clean your CSV file with OpenRefine
+    """
 
     def __init__(self, inp, aggr, sep='|'):
         """
@@ -22,13 +25,13 @@ class CsvToWikiTable:
         self.input = inp
         self.df = pd.read_csv(self.input, sep=sep)
         self.column = aggr
-        self.sezioni = None
+        self.group = None
     
-    def get_sezioni(self):
-        """Populate a list with the name of the CAI sezioni"""
-        self.sezioni = self.df[self.column].unique()
+    def get_group(self):
+        """Populate a list with the name of the aggregation group"""
+        self.group = self.df[self.column].unique()
     
-    def sezione_table(self, dat, idcol):
+    def group_table(self, dat, idcol):
         """Write a mediawiki table for singular aggregated values
         
         :param dat:
@@ -51,7 +54,7 @@ class CsvToWikiTable:
         out += '|-\n|}\n'
         return out
         
-    def sezioni_table(self, idcol, outdir=None, suffix=None):
+    def groups_table(self, idcol, outdir=None, suffix=None):
         """Write a mediawiki table for all sezioni
         
         :param str idcol: the column with routes id
@@ -61,8 +64,8 @@ class CsvToWikiTable:
                            the default None add no suffix
         """
         if self.sezioni == None:
-            self.get_sezioni()
-        for sez in self.sezioni:
+            self.get_group()
+        for sez in self.group:
             dat = self.df.loc[self.df[self.column] == sez]
             text = self.sezione_table(dat, idcol)
             if not outdir:
