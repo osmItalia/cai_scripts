@@ -83,6 +83,3 @@ class CsvToWikiTable:
                 with open(outpath, 'w') as fil:
                     fil.write(text)
         return True
-                    
-            
-        
