@@ -8,100 +8,11 @@ Created on Thu Dec 13 07:28:20 2018
 import os
 import json
 import urllib.request
-import osmium
-import shapely.wkt as wktlib
-from shapely.geometry import MultiLineString
-from shapely.ops import transform
-import geojson
-import pyproj
-from functools import partial
+from .functions import invert_bbox
+from .functions import check_network
+from .osmium_handler import CaiRoutesHandler
 
-def invert_bbox(bbox):
-    """Convert the bounding box from XMIN,YMIN,XMAX,YMAX to YMIN,XMIN,YMAX,XMAX
-
-    :param str box: the string of the bounding box comma separated
-    """
-    l = bbox.split(',')
-    return "{ymi},{xmi},{yma},{xma}".format(ymi=l[1], xmi=l[0], yma=l[3],
-                                            xma=l[2])
-
-def check_network(net):
-    """Check if network is set
-
-    :param str net: the network code
-    """
-    if net in ['lwn', 'rwn', 'nwn', 'iwn']:
-        return '["network"="{}"]'.format(net)
-    return ''
-
-WKTFAB = osmium.geom.WKTFactory()
-
-class CaiCounterHandler(osmium.SimpleHandler):
-    """Class to parse CAI routes from OSM file"""
-    def __init__(self):
-        osmium.SimpleHandler.__init__(self)
-        self.count = 0
-        self.routes = {}
-        self.ways = {}
-        self.gjson = None
-        self.total = 0
-
-    def way(self, way):
-        """Function to parse ways"""
-        self.ways[way.id] = WKTFAB.create_linestring(way)
-
-    def relation(self, rel):
-        """Function to parse relations"""
-        members = []
-        tags = {}
-        for mem in rel.members:
-            if mem.type == 'w':
-                members.append(mem.ref)
-        for t in rel.tags:
-            tags[t.k] = t.v
-        tags['id'] = rel.id
-        self.count += 1
-        self.routes[rel.id] = {'tags': tags, 'elems': members}
-
-    def length(self, epsg="EPSG:3035"):
-        """Function to return the total lenght of routes"""
-        project = partial(pyproj.transform, pyproj.Proj(init='EPSG:4326'),
-                          pyproj.Proj(init=epsg))
-        alreadid = []
-        for k, v in self.routes.items():
-            lines = []
-            for w in v['elems']:
-                if w not in alreadid:
-                    lines.append(wktlib.loads(self.ways[w]))
-                    alreadid.append(w)
-            geom = MultiLineString(lines)
-            geomm = transform(project, geom)
-            self.total += geomm.length
-
-
-    def create_geojson(self):
-        """Function to create geometries for routes and GeoJSON object"""
-        features = []
-        for k, v in self.routes.items():
-            lines = []
-            for w in v['elems']:
-                lines.append(wktlib.loads(self.ways[w]))
-            geom = MultiLineString(lines)
-            self.routes[k]['geom'] = geom
-            feat = geojson.Feature(geometry=geom,
-                                   properties=self.routes[k]['tags'])
-            features.append(feat)
-        self.gjson = geojson.FeatureCollection(features)
-
-    def write_geojson(self, out):
-        """Function to write GeoJSON file
-
-        :param str out: the path to the output file
-        """
-        with open(out, 'w') as f:
-            geojson.dump(self.gjson, f)
-
-
+# class to get data from overpass and convert in different format
 class CaiOsmData:
 
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
@@ -126,8 +37,6 @@ class CaiOsmData:
         self.separator = separator
         self.debug = debug
         self.cch = None
-        self.osm = None
-
 
     def _get_data(self, instr):
         """Private function to obtain the OSM data from overpass api
@@ -182,7 +91,10 @@ out;"""
 
 
     def get_data_osm(self, network='lwn'):
-        """Function to return data in the original OSM format"""
+        """Function to return data in the original OSM format
+
+        :param str network: the network level to query, default 'lwn'
+        """
         temp = """[out:xml]
 ;
 {area}
@@ -209,7 +121,10 @@ out;"""
 
 
     def get_data_json(self, network='lwn'):
-        """Function to return the OSM data in JSON formats"""
+        """Function to return the OSM data in JSON formats
+
+        :param str network: the network level to query, default 'lwn'
+        """
         temp = """[out:json]
 ;
 {area}
@@ -235,7 +150,10 @@ out skel qt;"""
 
 
     def get_tags_json(self, debug=False, network='lwn'):
-        """Function to get the tags plus id for CAI relations"""
+        """Function to get the tags plus id for CAI relations
+
+        :param str network: the network level to query, default 'lwn'
+        """
         data = self.get_data_json(network=network)
         tags = []
         for elem in data['elements']:
@@ -251,9 +169,11 @@ out skel qt;"""
         return tags
 
 
-    def wiki_table(self, network=False):
+    def wiki_table(self, network='lwn'):
         """Function to convert a CSV file to a wiki table.
         Original code from https://github.com/dlink/vbin/blob/master/csv2wiki
+
+        :param str network: the network level to query, default 'lwn'
         """
         data = self.get_data_csv(tags='"ref","name",::id', network=network)
         # read it
@@ -291,34 +211,39 @@ out skel qt;"""
         out += "|-\n|}\n"
         return out
 
-    def get_geojson(self, network=False):
-        """Function to create a GeoJSON object"""
-        if not self.osm:
-            self.osm = self.get_data_osm(network=network)
-        import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
-            fi.write(self.osm)
-        if not self.cch:
-            self.cch = CaiCounterHandler()
-            self.cch.apply_file(fi.name, locations=True)
-        self.cch.create_geojson()
-        os.remove(fi.name)
-        return self.cch.gjson
+    def get_length(self, network='lwn'):
+        """Function to return the total lenght of data
 
-    def get_length(self, network=False):
-        """Function to return the total lenght of data"""
-        if not self.osm:
-            self.osm = self.get_data_osm(network=network)
-        import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
-            fi.write(self.osm)
+        :param str network: the network level to query, default 'lwn'
+        """
+
         if not self.cch:
-            self.cch = CaiCounterHandler()
-            self.cch.apply_file(fi.name, locations=True)
+            self.cch.get_cairoutehandler(network)
         self.cch.length()
-        os.remove(fi.name)
         return self.cch.total
 
+    def get_cairoutehandler(self, network='lwn'):
+        """Function to download osm data and create CaiRoutesHandler instance
+
+        :param str network: the network level to query, default 'lwn'
+        """
+        osm = self.get_data_osm(network=network)
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
+            fi.write(osm)
+        self.cch = CaiRoutesHandler()
+        self.cch.apply_file(fi.name, locations=True)
+        os.remove(fi.name)
+        return True
+
+    def get_geojson(self, network='lwn'):
+        """Function to get a GeoJSON object
+
+        :param str network: the network level to query, default 'lwn'
+        """
+        if not self.cch:
+            self.get_cairoutehandler(network)
+        return self.cch.gjson
 
     def write(self, out, out_format, network=False):
         """Write the data obtained in different format into a file
@@ -333,17 +258,17 @@ out skel qt;"""
         elif out_format == 'wikitable':
             data = self.wiki_table(network=network)
         elif out_format == 'json':
-            data = self.get_data_json(network=network)
+            data = json.dumps(self.get_data_json(network=network))
         elif out_format == 'tags':
-            data = self.get_tags_json(network=network)
+            data = json.dumps(self.get_tags_json(network=network))
         elif out_format == 'geojson':
-            data = self.get_geojson(network=network)
-            with open(out, 'w') as f:
-                geojson.dump(data, f)
+            if not self.cch:
+                self.get_cairoutehandler(network)
+            self.cch.write_geojson(out, 'route')
             return True
         else:
-            raise ValueError('Only csv, osm, wikitable, json, tags format are '
-                             'supported')
+            raise ValueError('Only csv, osm, wikitable, json, tags, geojson '
+                             'format are supported')
         with open(out, 'w') as fil:
             fil.write(data)
         return True
