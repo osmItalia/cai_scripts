@@ -86,9 +86,9 @@ class CaiOsmPg():
             else:
                   sql += "l.highway is not null"
 
-            sql += "and not ST_Within(l.way, r.way)) as" \
-                   " nocai ST_intersects(nocai.way, poly) group by reg order " \
-                   "by reg;"
+            sql += " and not ST_Within(l.way, r.way)) as" \
+                   " nocai where ST_intersects(nocai.way, poly) group by reg" \
+                   " order by reg;"
             sql = sql.format(reg=self.regsql, pre=self.prefix,
                              cai=self.cai_where)
         else:
@@ -99,12 +99,12 @@ class CaiOsmPg():
                                                     cai=self.cai_where)
         return self._execute(sql)
 
-    def print_csv(self, regions=True, total=False):
-        if regions:
+    def print_csv(self, regions=True, total=False, highways=None):
+        if not self.regions and regions:
             self.set_administrative_bounds()
         routes = self.route_count_lenght()
         if total:
-            noroutes = self.not_route_lenght()
+            noroutes = self.not_route_lenght(highways=highways)
             if len(routes) == len(noroutes):
                 for i in range(len(routes)):
                     vals = list(routes[i])
