@@ -23,25 +23,25 @@ class CaiOsmInfomont:
         
         :param str outpath: the path to the output GeoJSON file
         """
-        self.cch.write_geojson(outpath, typ='way')
+        self.cch.write_geojson(outpath, typ='way', infomont=True)
         
     def write_routes(self, outpath):
-        """Write routes info in CSV format
+        """Write routes info in GeoJSON format
         
-        :param str outpath: the path to the output CSV file
+        :param str outpath: the path to the output GeoJSON file
         """
-        self.cch.write_relations_infomont(outpath)
+        self.cch.write_geojson(outpath, typ='route', infomont=True)
         
     def write_routes_ways(self, outpath):
-        """Write routes info in CSV format
+        """Write routes members info in GeoJSON format
         
-        :param str outpath: the path to the output CSV file
+        :param str outpath: the path to the output GeoJSON file
         """
-        self.cch.write_relation_members_infomont(outpath)
+        self.cch.write_geojson(outpath, typ='members', infomont=True)
     
     def write_all(self, outdir):
         """Write all info ready to be imported in infomont
         """
-        self.write_routes(os.path.join(outdir, 'route.csv'))
-        self.write_routes_ways(os.path.join(outdir, 'members.csv'))
-        self.write_ways(os.path.join(outdir, 'ways.geojson'))
+        self.write_routes(os.path.join(outdir, 'sent_perc.geojson'))
+        self.write_routes_ways(os.path.join(outdir, 'trt_perc.geojson'))
+        self.write_ways(os.path.join(outdir, 'trt_sent.geojson'))
