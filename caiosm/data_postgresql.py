@@ -82,7 +82,7 @@ class CaiOsmPg():
                   "as regioni, (select l.way as way from {pre}_line as l," \
                   "(select way from {pre}_line where {cai}) as r where "
             if highways:
-                  sql += "l.highway in [{}]".format(','.join(highways))
+                  sql += "l.highway in ({})".format(','.join(highways))
             else:
                   sql += "l.highway is not null"
 
