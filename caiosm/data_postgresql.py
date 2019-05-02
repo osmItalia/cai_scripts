@@ -9,7 +9,7 @@ import geopandas as gpd
 class CaiOsmPg():
 
     def __init__(self, dbconnection, outdir="/tmp", prefix='planet_osm',
-                 network='lwn', separator='|'):
+                 network='lwn', separator='|', debug=False):
         self.conn = psycopg2.connect(dbconnection)
         self.outdir = outdir
         self.prefix = prefix
@@ -21,12 +21,15 @@ class CaiOsmPg():
                          "'source:ref')"
         if network:
             self.cai_where += " and tags->'network'='{}'".format(network)
+        self.debug = debug
 
     def _execute(self, query):
         """Execute a query using psycopg2 and return value as list
 
         :param str query: a valid SQL query
         """
+        if self.debug:
+            print(query)
         cur = self.conn.cursor()
         cur.execute(query)
         out = cur.fetchall()
@@ -127,15 +130,32 @@ class CaiOsmPg():
 
     def print_italy(self, fname='cai_map_italy.png'):
         # image for italy
-        paths = gpd.read_postgis("select * from planet_osm_line where route='hiking' and (tags ? 'cai_scale' or operator in ('CAI', 'Club Alpino Italiano'))", self.conn, geom_col='way', crs={'init': u'epsg:32632'})
+        paths = gpd.read_postgis("select * from planet_osm_line where {}".format(self.cai_where),
+                                 self.conn, geom_col='way',
+                                 crs={'init': u'epsg:32632'})
         region = gpd.read_postgis(self.regsql, self.conn, geom_col='poly',
                                   crs={'init': u'epsg:32632'})
         self._print(region, paths)
 
     def print_region(self, region):
         # get the data for region
-        paths = gpd.read_postgis("select distinct cai.* from (select name as reg, st_union(way) as poly from planet_osm_polygon where admin_level='4' and boundary='administrative' and tags ? 'ISO3166-2' and tags ? 'ref:ISTAT' and name='{REG}' group by name) as lig, (select * from planet_osm_line where route='hiking' and (tags ? 'cai_scale' or operator in ('CAI', 'Club Alpino Italiano'))) as cai where ST_intersects(way, poly)".format(REG=region), self.conn, geom_col='way', crs={'init': u'epsg:32632'})
-        region = gpd.read_postgis("select name as reg, st_union(way) as poly from planet_osm_polygon where admin_level='4' and boundary='administrative' and tags ? 'ISO3166-2' and tags ? 'ref:ISTAT' and name='{REG}' group by name".format(REG=region), self.conn, geom_col='poly', crs={'init': u'epsg:32632'})
+        paths = gpd.read_postgis("select distinct cai.* from (select name as "\
+                                 "reg, st_union(way) as poly from planet_osm" \
+                                 "_polygon where admin_level='4' and boundary" \
+                                 "='administrative' and tags ? 'ISO3166-2' " \
+                                 "and tags ? 'ref:ISTAT' and name='{REG}' " \
+                                 "group by name) as lig, (select * from " \
+                                 "planet_osm_line where {CAIWHERE}) as cai " \
+                                 "where ST_intersects(way, poly)".format(REG=region,
+                                 CAIWHERE=self.cai_where), self.conn,
+                                 geom_col='way', crs={'init': u'epsg:32632'})
+        region = gpd.read_postgis("select name as reg, st_union(way) as poly" \
+                                  " from planet_osm_polygon where admin_level"\
+                                  "='4' and boundary='administrative' and " \
+                                  "tags ? 'ISO3166-2' and tags ? 'ref:ISTAT' " \
+                                  "and name='{REG}' group by name".format(REG=region),
+                                  self.conn, geom_col='poly',
+                                  crs={'init': u'epsg:32632'})
         self._print(region, paths)
 
     def print_all_regions(self):
