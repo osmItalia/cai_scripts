@@ -58,8 +58,8 @@ class CaiOsmPg():
         :param str others: other SQL where statement additional to
                            admin_level=adminlevel and boundary='administrative'
         """
-        sql = self.set_administrative_bounds(adminlevel, others)
-        self.regions = self._execute(sql)
+        self.set_administrative_bounds(adminlevel, others)
+        self.regions = self._execute(self.regsql)
         return True
 
     def route_count_lenght(self):
