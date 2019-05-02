@@ -1,8 +1,5 @@
-import os
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import psycopg2
-import pandas as pd
 import geopandas as gpd
 
 
