@@ -12,7 +12,7 @@ from subprocess import Popen, PIPE
 
 from shapely.geometry import shape
 import geojson
-import geopandas
+import geopandas as gpd
 import matplotlib.pyplot as plt
 from PIL import Image, ImageChops
 
@@ -139,7 +139,7 @@ def create_map(geom, out):
     :param obj geom: shapely geometry object
     :param str out: path out the output img file
     """
-    gs = geopandas.GeoSeries(geom)
+    gs = gpd.GeoSeries(geom)
     gs.crs = {'init': 'epsg:4326'}
     gs = gs.to_crs(epsg=3857)
     ax = gs.plot(figsize=(10, 10), alpha=0.5, color='r')
@@ -158,3 +158,7 @@ def create_map(geom, out):
         newimg.save(out)
         os.remove(tmpto)
         return True
+
+def get_regions_from_geojson(inpath, col='Name'):
+    infile = gpd.read_file(inpath)
+    return list(infile[col])
