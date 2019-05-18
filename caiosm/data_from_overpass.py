@@ -13,6 +13,7 @@ from .functions import invert_bbox
 from .functions import check_network
 from .osmium_handler import CaiRoutesHandler
 
+DIRFILE = os.path.dirname(os.path.realpath(__file__))
 # class to get data from overpass and convert in different format
 class CaiOsmData:
 
@@ -214,6 +215,7 @@ out skel qt;"""
 
         :param str out: the path to the output file
         :param str out_format: the required output format
+        :param str network: the network level to query, default 'lwn'
         """
         if out_format == 'csv':
             data = self.get_data_csv(network=network)
@@ -228,7 +230,7 @@ out skel qt;"""
         elif out_format == 'geojson':
             data = self.get_geojson(network=network)
             with open(out, 'w') as fil:
-                geojson.dump(data, fi)
+                geojson.dump(data, fil)
             return True
         else:
             raise ValueError('Only csv, osm, wikitable, json, tags, geojson '
@@ -244,7 +246,7 @@ class CaiOsmRoute(CaiOsmData):
         super(CaiOsmRoute, self).__init__(area=area, bbox=bbox,
                                           bbox_inverted=bbox_inverted,
                                           separator=separator, debug=debug)
-
+        self.cch = None
         self.query = """
 relation
   ["route"="hiking"]
@@ -259,7 +261,7 @@ relation
         :param str network: the network level to query, default 'lwn'
         """
 
-        if not self.cch:
+        if self.cch is None:
             self.cch.get_cairoutehandler(network)
         self.cch.length()
         return self.cch.total
@@ -283,8 +285,9 @@ relation
 
         :param str network: the network level to query, default 'lwn'
         """
-        if not self.cch:
+        if self.cch is None:
             self.get_cairoutehandler(network)
+        self.cch.create_routes_geojson()
         return self.cch.gjson
 
 
@@ -368,15 +371,99 @@ relation
   ["source:ref"]
   ({bbox});
 """
+        self.codespath = os.path.join(DIRFILE, 'data', 'cai_codes.csv')
+        self.cai_codes = None
+        self.cai_codes_dict = {}
+        self.cai_codes_reg = {}
+        if not os.path.exists(self.codespath):
+            self.download_csv_file()
+        else:
+            self._read_codes()
+
+    def _read_codes(self):
+        """Read the code from the file"""
+        with open(self.codespath) as fi:
+            cai_lines = fi.readlines()
+        for line in cai_lines :
+            vals = line.split(',')
+            self.cai_codes.append(vals)
+            if vals[4] in ['', 'Regione']:
+                continue
+            self.cai_codes_dict[vals[0]] = {'name': vals[1], 'city': vals[2],
+                                            'region': vals[4]}
+            if vals[4] not in self.cai_codes_reg.keys():
+                self.cai_codes_reg[vals[4]] = []
+            self.cai_codes_reg[vals[4]].append({'name': vals[1], 'id': vals[0],
+                                                'city': vals[2]})
+
+    def download_csv_file(self, url="https://docs.google.com/spreadsheets/d/e/"
+                          "2PACX-1vQWs9ydWZEMGust3TRuJX-HXLTnjAM5TBQ4XiKA_BSb4"
+                          "7cfh70n-5otAOmSoqDzm8GHnFe039xnsqAz/pub?gid=1089220"
+                          "791&single=true&output=csv"):
+        """Function to download data into CSV file"""
+        req = urllib.request.Request(url)
+        resp = urllib.request.urlopen(req)
+        respData = resp.read()
+        with open(self.codespath, 'w') as fi:
+         fi.write(respData.decode(encoding='utf-8', errors='ignore'))
+        self._read_codes()
 
     def get_list_codes(self, network='lwn'):
-        """Function to return data in CSV format
+        """Function to return a list of the CAI codes used in OSM
 
-        :param str network: a list of tags to show in the csv
+        :param str network: the network level to query, default 'lwn'
         """
         allcodes = self.get_data_csv(csvheader=False, tags='"source:ref"',
                                      network=network)
         return list(set(allcodes.splitlines()))
+
+    def get_names_codes(self, network='lwn'):
+        """Function to return a list of the CAI codes and name used in OSM
+
+        :param str network: the network level to query, default 'lwn'
+        """
+        cai_codes = {}
+        output = []
+        for osm in self.get_list_codes(network=network):
+            if osm in self.cai_codes_dict.keys():
+                output.append([osm, self.cai_codes_dict[osm]['name'],
+                               self.cai_codes_dict[osm]['region']])
+        return output
+
+    def get_codes_region(self, region, network='lwn'):
+        """Return CAI codes for the selected region
+
+        :param str region: The region name
+        """
+        region = region.upper()
+        if region in self.cai_codes_reg.keys():
+            return self.cai_codes_reg[region]
+        else:
+            if 'VALLE' in region:
+                return self.cai_codes_reg["VALLE D'AOSTA"]
+            elif 'TRENTINO' in region:
+                return self.cai_codes_reg["TRENTINO-ALTO ADIGE"]
+            elif 'FRIULI' in region:
+                return self.cai_codes_reg["FRIULI-VENEZIA GIULIA"]
+        return "Region '{}' not found".format(region)
+
+    def write(self, out, out_format, network=False):
+        """Write the data obtained in different format into a file
+
+        :param str out: the path to the output file
+        :param str out_format: the required output format
+        :param str network: the network level to query, default 'lwn'
+        """
+        if out_format == 'codes':
+            data = self.get_list_codes(network=network)
+        elif out_format == 'names':
+            data = self.get_names_codes(network=network)
+        else:
+            raise ValueError('Only codes, names format are supported')
+        with open(out, 'w') as fil:
+            for d in data:
+                fil.write("{}".format(self.separator.join(d)))
+        return True
 
 class CaiOsmRouteSourceRef(CaiOsmRoute):
     def __init__(self, sourceref, separator='|', debug=False):
