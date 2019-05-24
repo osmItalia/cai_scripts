@@ -9,6 +9,13 @@ import os
 import csv
 import json
 from subprocess import Popen, PIPE
+import configparser
+
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 
 from shapely.geometry import shape
 import geojson
@@ -51,8 +58,8 @@ def WriteDictToCSV(csv_file, csv_columns, dict_data):
                 writer.writerow(data['tags'])
     except IOError as err:
         errno, strerror = err.args
-        print("I/O error({0}): {1}".format(errno, strerror))    
-    return            
+        print("I/O error({0}): {1}".format(errno, strerror))
+    return
 
 def _run_cmd(cmd):
     """Run a command and check if the output it is fine
@@ -162,3 +169,40 @@ def create_map(geom, out):
 def get_regions_from_geojson(inpath, col='Name'):
     infile = gpd.read_file(inpath)
     return list(infile[col])
+
+def send_mail(sub, mess, to, attach=None):
+    """"""
+    config = configparser.ConfigParser()
+    config.read(os.path.join(os.path.expanduser('~'), '.cai_scripts.conf'))
+    email = config['EMAIL']['email']
+    password = config['EMAIL']['password']
+
+    msg = MIMEMultipart()
+    msg['From'] = email
+    msg['To'] = to
+    msg['Subject'] = sub
+
+    msg.attach(MIMEText(mess, 'plain'))
+
+    if attach:
+        # Setup the attachment
+        filename = os.path.basename(file_location)
+        attachment = open(file_location, "rb")
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload(attachment.read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+
+        # Attach the attachment to the MIMEMultipart object
+        msg.attach(part)
+
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(email, password)
+    text = msg.as_string()
+    try:
+        server.sendmail(email, to, text)
+        server.quit()
+    except Exception as e:
+        print(e)
+        print(to)
