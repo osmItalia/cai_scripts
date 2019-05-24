@@ -9,14 +9,17 @@ import os
 import json
 import geojson
 import urllib.request
+from datetime import date
+from datetime import timedelta
+import dateutil.parser
+import xmltodict
 from .functions import invert_bbox
 from .functions import check_network
 from .osmium_handler import CaiRoutesHandler
 
 DIRFILE = os.path.dirname(os.path.realpath(__file__))
-# class to get data from overpass and convert in different format
-class CaiOsmData:
 
+class CaiOsmBase:
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
                  separator='|', debug=False):
         """Class to get CAI data using Overpass API
@@ -55,6 +58,13 @@ class CaiOsmData:
         respData = resp.read()
         return respData.decode(encoding='utf-8', errors='ignore')
 
+# class to get data from overpass and convert in different format
+class CaiOsmData(CaiOsmBase):
+    def __init__(self, area=None, bbox=None, bbox_inverted=False,
+                 separator='|', debug=False):
+        super(CaiOsmData, self).__init__(area=area, bbox=bbox,
+                                          bbox_inverted=bbox_inverted,
+                                          separator=separator, debug=debug)
     def get_data_csv(self, csvheader=False, tags='::id,"name","ref"',
                      network='lwn'):
         """Function to return data in CSV format
@@ -74,7 +84,7 @@ out;
         if self.area:
             instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
                                 csvh=str(self.csvheader).lower(),
-                                sep=self.separator,  cols=tags,
+                                sep=self.separator, cols=tags,
                                 query=self.query.format(netw=network,
                                                         bbox='area.a'))
         elif self.bbox:
@@ -328,7 +338,7 @@ class CaiOsmOffice(CaiOsmData):
 
     def get_geojson(self):
         """Function to get a GeoJSON object"""
-        data = self.get_data_json(network=network)
+        data = self.get_data_json(network='')
         features = []
         ways = {}
         nodes = {}
@@ -360,7 +370,7 @@ class CaiOsmOffice(CaiOsmData):
 
 class CaiOsmSourceRef(CaiOsmData):
     def __init__(self, area='Italia', bbox=None, separator='|', debug=False):
-        super(CaiOsmSourceRef, self).__init__(area=area,
+        super(CaiOsmSourceRef, self).__init__(area=area, bbox=bbox,
                                               separator=separator, debug=debug)
 
         self.query = """
@@ -372,7 +382,8 @@ relation
   ({bbox});
 """
         self.codespath = os.path.join(DIRFILE, 'data', 'cai_codes.csv')
-        self.cai_codes = None
+        self.osm_codes = None
+        self.cai_codes = []
         self.cai_codes_dict = {}
         self.cai_codes_reg = {}
         if not os.path.exists(self.codespath):
@@ -413,9 +424,12 @@ relation
 
         :param str network: the network level to query, default 'lwn'
         """
-        allcodes = self.get_data_csv(csvheader=False, tags='"source:ref"',
-                                     network=network)
-        return list(set(allcodes.splitlines()))
+        if not self.osm_codes:
+            osm_codes = self.get_data_csv(csvheader=False,
+                                          tags='"source:ref"',
+                                          network=network)
+            self.osm_codes = list(set(osm_codes.splitlines()))
+        return self.osm_codes
 
     def get_names_codes(self, network='lwn'):
         """Function to return a list of the CAI codes and name used in OSM
@@ -462,7 +476,7 @@ relation
             raise ValueError('Only codes, names format are supported')
         with open(out, 'w') as fil:
             for d in data:
-                fil.write("{}".format(self.separator.join(d)))
+                fil.write("{}\n".format(self.separator.join(d)))
         return True
 
 class CaiOsmRouteSourceRef(CaiOsmRoute):
@@ -477,3 +491,97 @@ relation
   ["cai_scale"]
 """
         self.query = query + source + """;"""
+
+class CaiOsmRouteDiff(CaiOsmBase):
+    def __init__(self, startdate=None, enddate=None, daydiff=1, area=None,
+                 bbox=None, sourceref=None, separator='|', debug=False):
+        super(CaiOsmRouteDiff, self).__init__(area=area, bbox=bbox,
+                                              separator=separator, debug=debug)
+        if not startdate:
+            yesterday = date.today() - timedelta(daydiff)
+            startdate = "{}T00:00:00Z".format(yesterday.isoformat())
+        self.startdate = dateutil.parser.parse(startdate)
+        if not enddate:
+            enddate = "{}T00:00:00Z".format(date.today().isoformat())
+        self.enddate = dateutil.parser.parse(enddate)
+        header = '[out:xml][adiff:"{start}","{end}"];'.format(start=self.startdate,
+                                                              end=self.enddate)
+        query = header + """{area}
+relation
+  ["route"="hiking"]
+  {netw}
+  ["cai_scale"]
+"""
+        if sourceref:
+            source = '["source:ref"="{code}"]'.format(code=sourceref)
+            self.query = query + source
+        else:
+            self.query = query
+        if area or bbox:
+            self.query += """({bbox})"""
+        self.query += """; (._;>;);out meta geom;"""
+        self.osmdata = None
+
+    def get_data_osm(self, network='lwn'):
+        """Function to return data in the original OSM format
+
+        :param str network: the network level to query, default 'lwn'
+        """
+
+        network = check_network(network)
+        if self.area:
+            instr = self.query.format(area='area["name"="{}"]->.a;'.format(self.area),
+                                      bbox='area.a', netw=network)
+        elif self.bbox:
+            instr = self.query.format(area='', bbox=self.bbox, netw=network)
+        else:
+            instr = self.query.format(area='', bbox='', netw=network)
+
+        self.osmdata = self._get_data(instr)
+        return self.osmdata
+
+    def get_changeset(self, sourceref=None, network='lwn'):
+        """Return the changeset id"""
+        if not self.osmdata:
+            self.get_data_osm(network=network)
+        jsonosm = xmltodict.parse(self.osmdata)
+        output = []
+        for change in jsonosm['osm']['action']:
+            if 'node' in change.keys():
+                data = change['node']
+            elif 'way' in change.keys():
+                data = change['way']
+            elif 'relation' in change.keys():
+                data = change['relation']
+            else:
+                continue
+            changedata = dateutil.parser.parse(data['@timestamp'])
+            if self.startdate.date() <= changedata.date() <= self.enddate.date():
+                changeset = data['@changeset']
+                if changeset not in output:
+                    output.append(changeset)
+        return output
+
+    def get_cairoutehandler(self, network='lwn'):
+        """Function to download osm data and create CaiRoutesHandler instance
+
+        :param str network: the network level to query, default 'lwn'
+        """
+        osm = self.get_data_osm(network=network)
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
+            fi.write(osm)
+        self.cch = CaiRoutesHandler()
+        self.cch.apply_file(fi.name, locations=True)
+        os.remove(fi.name)
+        return True
+
+    def get_geojson(self, network='lwn'):
+        """Function to get a GeoJSON object
+
+        :param str network: the network level to query, default 'lwn'
+        """
+        if self.cch is None:
+            self.get_cairoutehandler(network)
+        self.cch.create_routes_geojson()
+        return self.cch.gjson
