@@ -4,3 +4,6 @@ lib
 share
 dist
 build
+app/__pycache__/
+app/static/regions/*
+app/static/data/cai_osm.csv
