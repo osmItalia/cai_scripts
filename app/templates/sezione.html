@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='jquery.dataTables.min.css') }}">
+{% endblock %}
+
+{% block subtitle %}<h2>{{ name|upper }}</h2>{% endblock %}
+
+{% block routes %}
+    <table id="osmtable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Nome</th>
+                <th>Codice</th>
+                <th>Classificazione CAI</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Distance</th>
+                <th>Symbol</th>
+                <th>Tool</th>
+            </tr>
+        </thead>
+    </table>
+    <input type="button" value="Clear results" onclick="clearFilter()"/>        
+{% endblock %}
+{% block jsscript %}
+  <script src="{{ url_for('static', filename='jquery.dataTables.min.js') }}"></script>
+  <script>
+    $(document).ready(function() {
+	    $.ajaxSetup ({
+		   // Disable caching of AJAX responses
+		   cache: false
+	    });
+	    sezione_map('{{ sez }}');
+	    sezione_table('{{ sez }}');
+	 });
+  </script>
+{% endblock %}

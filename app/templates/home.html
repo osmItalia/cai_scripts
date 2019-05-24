@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block routes %}	
+<h2>Sezioni e sottosezioni CAI presenti su OpenStreetMap</h2>
+    <table id="osmtable" class="display center" style="width:100%">
+       
+    </table>
+{% endblock %}
+
+{% block jsscript %}
+  <script>
+    $(document).ready(function() {
+	    $.ajaxSetup ({
+		   // Disable caching of AJAX responses
+		   cache: false
+	    });
+	    home_map();
+	    home_table();	
+	 });
+  </script>
+{% endblock %}
