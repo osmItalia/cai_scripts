@@ -21,7 +21,7 @@ DIRFILE = os.path.dirname(os.path.realpath(__file__))
 
 class CaiOsmBase:
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
-                 separator='|', debug=False):
+                 separator='|', debug=False, timeout=2500):
         """Class to get CAI data using Overpass API
 
         :param str area: the name of the area of interest
@@ -42,6 +42,7 @@ class CaiOsmBase:
         self.separator = separator
         self.debug = debug
         self.cch = None
+        self.timeout = timeout
 
     def _get_data(self, instr):
         """Private function to obtain the OSM data from overpass api
@@ -61,7 +62,7 @@ class CaiOsmBase:
 # class to get data from overpass and convert in different format
 class CaiOsmData(CaiOsmBase):
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
-                 separator='|', debug=False):
+                 separator='|', debug=False, timeout=2500):
         super(CaiOsmData, self).__init__(area=area, bbox=bbox,
                                           bbox_inverted=bbox_inverted,
                                           separator=separator, debug=debug)
@@ -74,7 +75,7 @@ class CaiOsmData(CaiOsmBase):
         """
         if csvheader:
             self.csvheader = True
-        temp = """[out:csv({cols};{csvh};"{sep}")]
+        temp = """[timeout:{time}][out:csv({cols};{csvh};"{sep}")]
 ;
 {area}
 {query}
@@ -86,17 +87,20 @@ out;
                                 csvh=str(self.csvheader).lower(),
                                 sep=self.separator, cols=tags,
                                 query=self.query.format(netw=network,
-                                                        bbox='area.a'))
+                                                        bbox='area.a'),
+                                time=self.timeout)
         elif self.bbox:
             instr = temp.format(area='', csvh=str(self.csvheader).lower(),
                                 sep=self.separator, cols=tags,
                                 query=self.query.format(netw=network,
-                                                        bbox=self.bbox))
+                                                        bbox=self.bbox),
+                                time=self.timeout)
         else:
             instr = temp.format(area='', csvh=str(self.csvheader).lower(),
                                 sep=self.separator, cols=tags,
                                 query=self.query.format(netw=network,
-                                                        bbox=''))
+                                                        bbox=''),
+                                time=self.timeout)
 
         return self._get_data(instr)
 
@@ -106,7 +110,7 @@ out;
 
         :param str network: the network level to query, default 'lwn'
         """
-        temp = """[out:xml]
+        temp = """[timeout:{time}][out:xml]
 ;
 {area}
 {query}
@@ -119,13 +123,16 @@ out;"""
         if self.area:
             instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
                                 query=self.query.format(netw=network,
-                                                        bbox='area.a'))
+                                                        bbox='area.a'),
+                                time=self.timeout)
         elif self.bbox:
             instr = temp.format(area='', query=self.query.format(netw=network,
-                                                                 bbox=self.bbox))
+                                                                 bbox=self.bbox),
+                                time=self.timeout)
         else:
             instr = temp.format(area='', query=self.query.format(netw=network,
-                                                                 bbox=''))
+                                                                 bbox=''),
+                                time=self.timeout)
 
         return self._get_data(instr)
 
@@ -135,7 +142,7 @@ out;"""
 
         :param str network: the network level to query, default 'lwn'
         """
-        temp = """[out:json]
+        temp = """[timeout:{time}][out:json]
 ;
 {area}
 {query}
@@ -147,13 +154,16 @@ out skel qt;"""
         if self.area:
             instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
                                 query=self.query.format(netw=network,
-                                                        bbox='area.a'))
+                                                        bbox='area.a'),
+                                time=self.timeout)
         elif self.bbox:
             instr = temp.format(area='',query=self.query.format(netw=network,
-                                                                bbox=self.bbox))
+                                                                bbox=self.bbox),
+                                time=self.timeout)
         else:
             instr = temp.format(area='',query=self.query.format(netw=network,
-                                                                bbox=''))
+                                                                bbox=''),
+                                time=self.timeout)
 
         return json.loads(self._get_data(instr))
 
@@ -252,8 +262,8 @@ out skel qt;"""
 
 class CaiOsmRoute(CaiOsmData):
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
-                 separator='|', debug=False):
-        super(CaiOsmRoute, self).__init__(area=area, bbox=bbox,
+                 separator='|', debug=False, timeout=2500):
+        super(CaiOsmRoute, self).__init__(area=area, bbox=bbox, timeout=timeout,
                                           bbox_inverted=bbox_inverted,
                                           separator=separator, debug=debug)
         self.cch = None
@@ -303,8 +313,9 @@ relation
 
 class CaiOsmOffice(CaiOsmData):
     def __init__(self, area='Italia', bbox=None, bbox_inverted=False,
-                 separator='|', debug=False):
+                 separator='|', debug=False, timeout=2500):
         super(CaiOsmOffice, self).__init__(area=area, bbox=bbox,
+                                           timeout=timeout,
                                            bbox_inverted=bbox_inverted,
                                            separator=separator, debug=debug)
         self.query = """
@@ -369,8 +380,10 @@ class CaiOsmOffice(CaiOsmData):
         return geojson.FeatureCollection(features)
 
 class CaiOsmSourceRef(CaiOsmData):
-    def __init__(self, area='Italia', bbox=None, separator='|', debug=False):
+    def __init__(self, area='Italia', bbox=None, separator='|', debug=False,
+                 timeout=2500):
         super(CaiOsmSourceRef, self).__init__(area=area, bbox=bbox,
+                                              timeout=timeout,
                                               separator=separator, debug=debug)
 
         self.query = """
@@ -436,7 +449,6 @@ relation
 
         :param str network: the network level to query, default 'lwn'
         """
-        cai_codes = {}
         output = []
         for osm in self.get_list_codes(network=network):
             if osm in self.cai_codes_dict.keys():
@@ -480,8 +492,9 @@ relation
         return True
 
 class CaiOsmRouteSourceRef(CaiOsmRoute):
-    def __init__(self, sourceref, separator='|', debug=False):
+    def __init__(self, sourceref, separator='|', debug=False, timeout=2500):
         super(CaiOsmRouteSourceRef, self).__init__(separator=separator,
+                                                   timeout=timeout,
                                                    debug=debug)
         source = '["source:ref"="{code}"]'.format(code=sourceref)
         query = """
@@ -494,8 +507,10 @@ relation
 
 class CaiOsmRouteDiff(CaiOsmBase):
     def __init__(self, startdate=None, enddate=None, daydiff=1, area=None,
-                 bbox=None, sourceref=None, separator='|', debug=False):
+                 bbox=None, sourceref=None, separator='|', debug=False,
+                 timeout=2500):
         super(CaiOsmRouteDiff, self).__init__(area=area, bbox=bbox,
+                                              timeout=timeout,
                                               separator=separator, debug=debug)
         if not startdate:
             yesterday = date.today() - timedelta(daydiff)
