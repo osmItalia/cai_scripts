@@ -10,14 +10,15 @@ import csv
 import json
 from subprocess import Popen, PIPE
 import configparser
-
+import itertools
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
-
-from shapely.geometry import shape
+import fiona
+from shapely.geometry import mapping, shape, MultiPoint, Point
+from shapely.ops import split
 import geojson
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -206,3 +207,53 @@ def send_mail(sub, mess, to, attach=None):
     except Exception as e:
         print(e)
         print(to)
+
+def get_points(lines):
+    inters = []
+    for l1,l2 in itertools.combinations(lines, 2):
+        line1 = shape(l1['geometry'])
+        line2 = shape(l2['geometry'])
+        if  line1.intersects(line2):
+            inter = line1.intersection(line2)
+            if "Point" == inter.type:
+                inters.append(inter)
+            elif "MultiPoint" == inter.type:
+                inters.extend([pt for pt in inter])
+            elif "MultiLineString" == inter.type:
+                multiLine = [line for line in inter]
+                first_coords = multiLine[0].coords[0]
+                last_coords = multiLine[len(multiLine)-1].coords[1]
+                inters.append(Point(first_coords[0], first_coords[1]))
+                inters.append(Point(last_coords[0], last_coords[1]))
+            elif "GeometryCollection" == inter.type:
+                for geom in inter:
+                    if "Point" == geom.type:
+                        inters.append(geom)
+                    elif "MultiPoint" == geom.type:
+                        inters.extend([pt for pt in geom])
+                    elif "MultiLineString" == geom.type:
+                        multiLine = [line for line in geom]
+                        first_coords = multiLine[0].coords[0]
+                        last_coords = multiLine[len(multiLine)-1].coords[1]
+                        inters.append(Point(first_coords[0], first_coords[1]))
+                        inters.append(Point(last_coords[0], last_coords[1]))
+    return MultiPoint(inters)
+
+def split_at_intersection(inpath, outpath, driver='ESRI Shapefile'):
+    with fiona.open(inpath, 'r') as source:
+        inschema=source.schema
+        incrs=source.crs
+        lines=[line for line in source]
+    mp = get_points(lines)
+    x = 0
+    layer = fiona.open(outpath, 'w', driver=driver, schema=inschema,
+                       crs=incrs)
+    for line in lines:
+        splitlines = split(shape(line['geometry']), mp)
+        for sl in splitlines:
+            layer.write({'properties': line['properties'], 'id': x,
+                         'geometry': mapping(sl)})
+            x += 1
+    layer.close()
+
+#    /home/lucadelu/github/cai_scripts/spezia/trt_sent.geojson
