@@ -12,6 +12,7 @@ from subprocess import Popen, PIPE
 import configparser
 import itertools
 import smtplib
+from copy import deepcopy
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -244,10 +245,8 @@ def split_at_intersection(lines):
     output = []
     for line in lines:
         splitlines = split(shape(line['geometry']), mp)
-        if line['properties']['osm_id_way'] == 471217184:
-            import pdb; pdb.set_trace()
         for sl in splitlines:
-            feats = line['properties']
+            feats = deepcopy(line['properties'])
             feats['IDTrat'] = x
             output.append(geojson.Feature(geometry=mapping(sl), id=x,
                                           properties=feats))
