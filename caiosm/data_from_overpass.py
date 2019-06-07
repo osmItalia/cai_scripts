@@ -13,6 +13,8 @@ from datetime import date
 from datetime import timedelta
 import dateutil.parser
 import xmltodict
+import osmium
+import tempfile
 from .functions import invert_bbox
 from .functions import check_network
 from .osmium_handler import CaiRoutesHandler
@@ -134,8 +136,22 @@ out;"""
                                                                  bbox=''),
                                 time=self.timeout)
 
-        return self._get_data(instr)
-
+        data = self._get_data(instr)
+        #import pdb; pdb.set_trace()
+        #mir = osmium.MergeInputReader()
+        #mir.add_buffer(data, "osm")
+        #print("before with")
+        #with tempfile.NamedTemporaryFile(suffix=".osm") as temp_osm:
+        #    os.unlink(temp_osm.name)
+        #    print("before writer")
+        #    wh = osmium.WriteHandler(temp_osm.name)
+        #    mir.apply(wh)
+        #    wh.close()
+        #    print("before read")
+        #    output = temp_osm.read()
+        #pdb.set_trace()
+        #return output
+        return data
 
     def get_data_json(self, network='lwn'):
         """Function to return the OSM data in JSON formats
@@ -267,6 +283,7 @@ class CaiOsmRoute(CaiOsmData):
                                           bbox_inverted=bbox_inverted,
                                           separator=separator, debug=debug)
         self.cch = None
+        self.lenght = None
         self.query = """
 relation
   ["route"="hiking"]
@@ -280,24 +297,24 @@ relation
 
         :param str network: the network level to query, default 'lwn'
         """
-
+        if self.lenght:
+            return self.lenght
         if self.cch is None:
             self.cch.get_cairoutehandler(network)
-        self.cch.length()
-        return self.cch.total
+        self.lenght = self.cch.length()
+        return self.lenght
 
     def get_cairoutehandler(self, network='lwn'):
         """Function to download osm data and create CaiRoutesHandler instance
 
         :param str network: the network level to query, default 'lwn'
         """
-        osm = self.get_data_osm(network=network)
-        import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
-            fi.write(osm)
+        data = self.get_data_osm(network=network)
         self.cch = CaiRoutesHandler()
-        self.cch.apply_file(fi.name, locations=True)
-        os.remove(fi.name)
+        # trick to solve the problem that overpass data ar not sorted
+        mir = osmium.MergeInputReader()
+        mir.add_buffer(data.encode('utf-8'), "osm")
+        mir.apply(self.cch, idx="flex_mem", simplify=True)
         return True
 
     def get_geojson(self, network='lwn'):
@@ -307,7 +324,8 @@ relation
         """
         if self.cch is None:
             self.get_cairoutehandler(network)
-        self.cch.create_routes_geojson()
+        if self.cch.gjson is None:
+            self.cch.create_routes_geojson()
         return self.cch.gjson
 
 
