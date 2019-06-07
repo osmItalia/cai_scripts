@@ -280,10 +280,10 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             osmid = feat['properties']['osm_id_way']
             newid = feat['properties']['IDTrat']
             for w in self.members[osmid]:
-                geom = LineString(wktlib.loads(feat['geometry']))
                 tags = {'IDPerc': w, 'IDtrat': newid}
-                feat = geojson.Feature(geometry=geom, properties=tags)
-                features.append(feat)
+                outfeat = geojson.Feature(geometry=feat['geometry'],
+                                          properties=tags)
+                features.append(outfeat)
         return geojson.FeatureCollection(features)
 
     def write_relations_infomont(self, out):
