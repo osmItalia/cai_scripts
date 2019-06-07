@@ -17,6 +17,7 @@ import pyproj
 from functools import partial
 
 from .functions import WriteDictToCSV
+from .functions import split_at_intersection
 
 # column to create the csv with route informations
 ROUTE_COLUMNS = ['id','name','ref', 'cai_scale', 'from', 'to', 'distance',
@@ -45,23 +46,26 @@ WKTFAB = osmium.geom.WKTFactory()
 class CaiRoutesHandler(osmium.SimpleHandler):
     """Class to parse CAI routes from OSM file and return them in different
     format"""
+
     def __init__(self, separator=","):
         osmium.SimpleHandler.__init__(self)
         self.count = 0
         self.routes = {}
         self.ways = {}
+        self.members = {}
         self.gjson = None
         self.wjson = None
         self.sep = separator
 
     def way(self, way):
         """Function to parse ways"""
+        self.members[way.id] = []
+        self.ways[way.id] = {}
         try:
-            self.ways[way.id] = {}
             self.ways[way.id]['geom'] = WKTFAB.create_linestring(way)
-            self.ways[way.id]['tags'] = way.tags
         except Exception:
-            pass
+            print("Error creating geometry for way {}".format(way.id))
+        self.ways[way.id]['tags'] = way.tags
 
     def relation(self, rel):
         """Function to parse relations"""
@@ -108,6 +112,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             lines = []
             outags = {}
             for w in v['elems']:
+                self.members[w].append(k)
                 lines.append(wktlib.loads(self.ways[w]['geom']))
             geom = MultiLineString(lines)
             self.routes[k]['geom'] = geom
@@ -122,7 +127,6 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                 # if one of the tags exists check it/them; otherwise set 001
                 if 'symbol' in tagskey or 'symbol:it' in tagskey or \
                    'osmc:symbol' in tagskey:
-                    cai = False
                     # check the tags in order
                     if 'osmc:symbol' in tagskey:
                         if 'red:red:white_stripe' in tags['osmc:symbol'] or \
@@ -221,6 +225,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
 
             feat = geojson.Feature(geometry=geom, properties=tags)
             features.append(feat)
+        if infomont:
+            features = split_at_intersection(features)
         self.wjson = geojson.FeatureCollection(features)
 
 
@@ -254,9 +260,12 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         :param str out: the path to the output CSV file
         """
         outext = "IDPerc{}IDtrat\n".format(self.sep)
-        for k, v in self.routes.items():
-            for w in v['elems']:
-                mystr = "{rel}{sep}{way}\n".format(rel=k, sep=self.sep, way=w)
+        for feat in self.wjson['features']:
+            osmid = feat['properties']['osm_id_way']
+            newid = feat['properties']['IDTrat']
+            for w in self.members[osmid]:
+                mystr = "{rel}{sep}{way}\n".format(rel=w, sep=self.sep,
+                                                   way=newid)
                 outext += mystr
         with open(out, 'w') as csvfile:
             csvfile.write(outext)
@@ -267,10 +276,12 @@ class CaiRoutesHandler(osmium.SimpleHandler):
            members as comma separated values
         """
         features = []
-        for k, v in self.routes.items():
-            for w in v['elems']:
-                geom = LineString(wktlib.loads(self.ways[w]['geom']))
-                tags = {'IDPerc': k, 'IDtrat': w}
+        for feat in self.wjson['features']:
+            osmid = feat['properties']['osm_id_way']
+            newid = feat['properties']['IDTrat']
+            for w in self.members[osmid]:
+                geom = LineString(wktlib.loads(feat['geometry']))
+                tags = {'IDPerc': w, 'IDtrat': newid}
                 feat = geojson.Feature(geometry=geom, properties=tags)
                 features.append(feat)
         return geojson.FeatureCollection(features)
