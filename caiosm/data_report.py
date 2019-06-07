@@ -7,7 +7,7 @@ Created on Wed Mar 27 11:49:25 2019
 """
 from time import sleep
 
-from caiosm.data_from_overpass import CaiOsmData
+from caiosm.data_from_overpass import CaiOsmRoute
 
 REGIONI = ["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna",
            "Friuli Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche",
@@ -22,7 +22,7 @@ class CaiOsmTable:
 
     def print_region(self, reg, unit='km'):
         """Return info for each region"""
-        cod = CaiOsmData(area=reg)
+        cod = CaiOsmRoute(area=reg)
         leng = round(cod.get_length())
         if unit == 'km':
             leng = round(leng / 1000, 1)
