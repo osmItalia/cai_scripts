@@ -16,7 +16,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
-import fiona
 from shapely.geometry import mapping, shape, MultiPoint, Point
 from shapely.ops import split
 import geojson
@@ -239,21 +238,18 @@ def get_points(lines):
                         inters.append(Point(last_coords[0], last_coords[1]))
     return MultiPoint(inters)
 
-def split_at_intersection(inpath, outpath, driver='ESRI Shapefile'):
-    with fiona.open(inpath, 'r') as source:
-        inschema=source.schema
-        incrs=source.crs
-        lines=[line for line in source]
+def split_at_intersection(lines):
     mp = get_points(lines)
     x = 0
-    layer = fiona.open(outpath, 'w', driver=driver, schema=inschema,
-                       crs=incrs)
+    output = []
     for line in lines:
         splitlines = split(shape(line['geometry']), mp)
+        if line['properties']['osm_id_way'] == 471217184:
+            import pdb; pdb.set_trace()
         for sl in splitlines:
-            layer.write({'properties': line['properties'], 'id': x,
-                         'geometry': mapping(sl)})
+            feats = line['properties']
+            feats['IDTrat'] = x
+            output.append(geojson.Feature(geometry=mapping(sl), id=x,
+                                          properties=feats))
             x += 1
-    layer.close()
-
-#    /home/lucadelu/github/cai_scripts/spezia/trt_sent.geojson
+    return output
