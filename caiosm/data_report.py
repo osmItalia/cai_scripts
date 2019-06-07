@@ -23,6 +23,7 @@ class CaiOsmTable:
     def print_region(self, reg, unit='km'):
         """Return info for each region"""
         cod = CaiOsmRoute(area=reg)
+        cod.get_cairoutehandler()
         leng = round(cod.get_length())
         if unit == 'km':
             leng = round(leng / 1000, 1)
