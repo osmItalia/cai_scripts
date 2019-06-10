@@ -118,7 +118,7 @@ out;
 {query}
 out;
 >;
-out skel qt;
+out qt;
 out;"""
 
         network = check_network(network)
@@ -164,7 +164,7 @@ out;"""
 {query}
 out;
 >;
-out skel qt;"""
+out qt;"""
 
         network = check_network(network)
         if self.area:
