@@ -7,6 +7,7 @@ Created on Mon Apr 22 00:41:04 2019
 """
 import os
 from .data_from_overpass import CaiOsmRoute
+from .functions import geojson2shp
 
 # class to get data from overpass and convert in infomont system
 class CaiOsmInfomont:
@@ -59,9 +60,20 @@ class CaiOsmInfomont:
         self.write_ways(os.path.join(outdir, 'trt_sent.geojson'))
         self.write_routes_ways(os.path.join(outdir, 'trt_perc.csv'))
 
-    def write_all_geo(self, outdir):
+    def write_all_geo(self, outdir, shapefile=True):
         """Write all info in geo format
         """
         self.write_routes_geo(os.path.join(outdir, 'sent_perc.geojson'))
         self.write_routes_ways_geo(os.path.join(outdir, 'trt_perc.geojson'))
         self.write_ways(os.path.join(outdir, 'trt_sent.geojson'))
+        if shapefile:
+            geojson2shp(os.path.join(outdir, 'sent_perc.geojson'),
+                        os.path.join(outdir, 'sent_perc.shp'))
+            geojson2shp(os.path.join(outdir, 'trt_perc.geojson'),
+                        os.path.join(outdir, 'trt_perc.shp'))
+            geojson2shp(os.path.join(outdir, 'trt_sent.geojson'),
+                        os.path.join(outdir, 'trt_sent.shp'))
+            os.remove(os.path.join(outdir, 'sent_perc.geojson'))
+            os.remove(os.path.join(outdir, 'trt_perc.geojson'))
+            os.remove(os.path.join(outdir, 'trt_sent.geojson'))
+
