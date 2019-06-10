@@ -20,6 +20,7 @@ from email import encoders
 from shapely.geometry import mapping, shape, MultiPoint, Point
 from shapely.ops import split
 import geojson
+import fiona
 import geopandas as gpd
 import matplotlib.pyplot as plt
 from PIL import Image, ImageChops
@@ -252,3 +253,11 @@ def split_at_intersection(lines):
                                           properties=feats))
             x += 1
     return output
+
+def geojson2shp(f_in, f_out):
+    """Function to convert geojson to ESRI shapfile"""
+    with fiona.open(f_in) as source:
+        with fiona.open(f_out, 'w', driver='ESRI shapefile',
+                        crs = source.crs, schema=source.schema) as out:
+            for feat in source:
+                out.write(feat)
