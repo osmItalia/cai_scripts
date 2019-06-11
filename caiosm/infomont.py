@@ -11,19 +11,21 @@ from .functions import geojson2shp
 
 # class to get data from overpass and convert in infomont system
 class CaiOsmInfomont:
-    def __init__(self, area=None, bbox=None, bbox_inverted=False):
+    def __init__(self, area=None, bbox=None, bbox_inverted=False,
+                 driver="ESRI Shapefile"):
         self.cor = CaiOsmRoute(area=area, bbox=bbox,
                                bbox_inverted=bbox_inverted)
         self.cor.get_cairoutehandler(infomont=True)
         self.cor.cch.create_way_geojson()
         self.cor.cch.create_routes_geojson()
+        self.driver = driver
 
     def write_ways(self, outpath):
         """Write routes' ways in GeoJSON format
 
         :param str outpath: the path to the output GeoJSON file
         """
-        self.cor.cch.write_geojson(outpath, typ='way')
+        self.cor.cch.write_geojson(outpath, typ='way', driv=self.driver)
 
     def write_routes(self, outpath):
         """Write routes info in GeoJSON format
@@ -37,17 +39,17 @@ class CaiOsmInfomont:
 
         :param str outpath: the path to the output GeoJSON file
         """
-        self.cor.cch.write_geojson(outpath, typ='route')
+        self.cor.cch.write_geojson(outpath, typ='route', driv=self.driver)
 
     def write_routes_ways_geo(self, outpath):
         """Write routes members info in GeoJSON format
 
         :param str outpath: the path to the output GeoJSON file
         """
-        self.cor.cch.write_geojson(outpath, typ='members')
+        self.cor.cch.write_geojson(outpath, typ='members', driv=self.driver)
 
     def write_routes_ways(self, outpath):
-        """Write routes members info in GeoJSON format
+        """Write routes members info in CSV format
 
         :param str outpath: the path to the output GeoJSON file
         """
@@ -57,23 +59,12 @@ class CaiOsmInfomont:
         """Write all info ready to be imported in infomont
         """
         self.write_routes(os.path.join(outdir, 'sent_perc.csv'))
-        self.write_ways(os.path.join(outdir, 'trt_sent.geojson'))
+        self.write_ways(os.path.join(outdir, 'trt_sent.shp'))
         self.write_routes_ways(os.path.join(outdir, 'trt_perc.csv'))
 
-    def write_all_geo(self, outdir, shapefile=True):
+    def write_all_geo(self, outdir):
         """Write all info in geo format
         """
-        self.write_routes_geo(os.path.join(outdir, 'sent_perc.geojson'))
-        self.write_ways(os.path.join(outdir, 'trt_sent.geojson'))
-        self.write_routes_ways_geo(os.path.join(outdir, 'trt_perc.geojson'))
-        if shapefile:
-            geojson2shp(os.path.join(outdir, 'sent_perc.geojson'),
-                        os.path.join(outdir, 'sent_perc.shp'))
-            geojson2shp(os.path.join(outdir, 'trt_perc.geojson'),
-                        os.path.join(outdir, 'trt_perc.shp'))
-            geojson2shp(os.path.join(outdir, 'trt_sent.geojson'),
-                        os.path.join(outdir, 'trt_sent.shp'))
-            os.remove(os.path.join(outdir, 'sent_perc.geojson'))
-            os.remove(os.path.join(outdir, 'trt_perc.geojson'))
-            os.remove(os.path.join(outdir, 'trt_sent.geojson'))
-
+        self.write_routes_geo(os.path.join(outdir, 'sent_perc.shp'))
+        self.write_ways(os.path.join(outdir, 'trt_sent.shp'))
+        self.write_routes_ways_geo(os.path.join(outdir, 'trt_perc.shp'))
