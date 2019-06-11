@@ -8,7 +8,6 @@ Created on Sun Mar  3 08:51:30 2019
 
 import osmium
 import copy
-import geojson
 from collections import OrderedDict
 import shapely.wkt as wktlib
 from shapely.geometry import MultiLineString

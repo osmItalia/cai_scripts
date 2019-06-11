@@ -7,7 +7,6 @@ Created on Mon Apr 22 00:41:04 2019
 """
 import os
 from .data_from_overpass import CaiOsmRoute
-from .functions import geojson2shp
 
 # class to get data from overpass and convert in infomont system
 class CaiOsmInfomont:

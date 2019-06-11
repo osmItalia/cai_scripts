@@ -14,7 +14,6 @@ from datetime import timedelta
 import dateutil.parser
 import xmltodict
 import osmium
-import tempfile
 from .functions import invert_bbox
 from .functions import check_network
 from .osmium_handler import CaiRoutesHandler
