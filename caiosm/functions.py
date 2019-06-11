@@ -249,15 +249,15 @@ def split_at_intersection(lines):
         for sl in splitlines:
             feats = deepcopy(line['properties'])
             feats['IDTrat'] = x
-            output.append(geojson.Feature(geometry=mapping(sl), id=x,
-                                          properties=feats))
+            output.append({'geometry': mapping(sl), 'id': x,
+                           'properties': feats})
             x += 1
     return output
 
 def geojson2shp(f_in, f_out):
     """Function to convert geojson to ESRI shapfile"""
     with fiona.open(f_in) as source:
-        with fiona.open(f_out, 'w', driver='ESRI shapefile',
+        with fiona.open(f_out, 'w', driver='ESRI Shapefile',
                         crs = source.crs, schema=source.schema) as out:
             for feat in source:
                 out.write(feat)

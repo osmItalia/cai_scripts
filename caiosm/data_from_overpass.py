@@ -304,13 +304,13 @@ relation
         self.lenght = self.cch.length()
         return self.lenght
 
-    def get_cairoutehandler(self, network='lwn'):
+    def get_cairoutehandler(self, network='lwn', infomont=False):
         """Function to download osm data and create CaiRoutesHandler instance
 
         :param str network: the network level to query, default 'lwn'
         """
         data = self.get_data_osm(network=network)
-        self.cch = CaiRoutesHandler()
+        self.cch = CaiRoutesHandler(infomont=infomont)
         # trick to solve the problem that overpass data ar not sorted
         mir = osmium.MergeInputReader()
         mir.add_buffer(data.encode('utf-8'), "osm")

@@ -9,10 +9,13 @@ Created on Sun Mar  3 08:51:30 2019
 import osmium
 import copy
 import geojson
+from collections import OrderedDict
 import shapely.wkt as wktlib
 from shapely.geometry import MultiLineString
 from shapely.geometry import LineString
+from shapely.geometry import mapping
 from shapely.ops import transform
+import fiona
 import pyproj
 from functools import partial
 
@@ -36,9 +39,9 @@ CONCRETE_SURFACE = ['cobblestone', 'cobblestone:flattened', 'paving_stones',
                     'pebblestone', 'sett', 'grass_paver']
 OTHERS_SURFACE = ['metal', 'wood']
 # route fields name {'old': 'new'}
-ROUTE_FIELD = {'id': 'IDPerc', 'ref': 'Nume', 'name': 'Denomi',
-               'rwn:name': 'rwn_name', 'ref:REI': 'COD_REI',
-               'cai_scale': 'PerDif'}
+ROUTE_FIELD = OrderedDict([('IDPerc', 'id'), ('Nume', 'ref'),
+                           ('Denomi', 'name'), ('rwn_name', 'rwn:name'),
+                           ('COD_REI', 'ref:REI'), ('PerDif', 'cai_scale')])
 # WKT class from osmium
 WKTFAB = osmium.geom.WKTFactory()
 
@@ -47,15 +50,33 @@ class CaiRoutesHandler(osmium.SimpleHandler):
     """Class to parse CAI routes from OSM file and return them in different
     format"""
 
-    def __init__(self, separator=","):
+    def __init__(self, separator=",", infomont=False):
         osmium.SimpleHandler.__init__(self)
+        self.infomont = infomont
         self.count = 0
         self.routes = {}
         self.ways = {}
         self.members = {}
-        self.gjson = None
-        self.wjson = None
+        self.gjson = []
+        self.wjson = []
         self.sep = separator
+        self.route_schema = {'geometry': 'MultiLineString',}
+        self.way_schema = {'geometry': 'LineString',}
+        self.memb_schema = {'geometry': 'LineString',
+                            'properties': OrderedDict([('IDPerc', 'int'),
+                                                       ('IDtrat', 'int')])}
+        if self.infomont:
+            self.route_schema['properties'] = OrderedDict([('IDPerc', 'int'),
+                                                           ('Nume', 'str'),
+                                                           ('Denomi', 'str'),
+                                                           ('rwn_name', 'str'),
+                                                           ('COD_REI', 'str'),
+                                                           ('PerDif', 'str'),
+                                                           ('segni', 'str')])
+            self.way_schema['properties'] = OrderedDict([('osm_id_way', 'int'),
+                                                         ('TIPOLOGIA', 'str'),
+                                                         ('CARATTER', 'str'),
+                                                         ('IDTrat', 'int')])
 
     def way(self, way):
         """Function to parse ways"""
@@ -105,24 +126,25 @@ class CaiRoutesHandler(osmium.SimpleHandler):
          return total
 
 
-    def create_routes_geojson(self, infomont=False):
+    def create_routes_geojson(self):
         """Function to create GeoJSON geometries for routes"""
-        features = []
         for k, v in self.routes.items():
             lines = []
-            outags = {}
+            outags = OrderedDict()
             for w in v['elems']:
                 self.members[w].append(k)
                 lines.append(wktlib.loads(self.ways[w]['geom']))
             geom = MultiLineString(lines)
             self.routes[k]['geom'] = geom
             tags = self.routes[k]['tags']
-            tagskey = tags.keys()
+            tagskey = sorted(tags.keys())
             # run operations to be compliant with infomont format
-            if infomont:
-                for old, new in ROUTE_FIELD.items():
+            if self.infomont:
+                for new, old in ROUTE_FIELD.items():
                     if old in tagskey:
                         outags[new] = tags[old]
+                    else:
+                        outags[new] = ''
                 # check the symbol
                 # if one of the tags exists check it/them; otherwise set 001
                 if 'symbol' in tagskey or 'symbol:it' in tagskey or \
@@ -162,11 +184,10 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                     outags['segni'] = '001'
             else:
                  outags = tags
-            feat = geojson.Feature(geometry=geom, properties=outags)
-            features.append(feat)
-        self.gjson = geojson.FeatureCollection(features)
+            feat = {'geometry': mapping(geom), 'properties': outags}
+            self.gjson.append(feat)
 
-    def create_way_geojson(self, infomont=False):
+    def create_way_geojson(self):
         """Function to create GeoJSON geometries for ways
 
         :param bool infomont: perform infomont checks
@@ -178,8 +199,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             for p in v['tags']:
                 tags[p.k] = p.v
             # run operations to be compliant with infomont format
-            if infomont:
-                outags = {'osm_id_way': k}
+            if self.infomont:
+                outags = OrderedDict([('osm_id_way', k)])
                 try:
                     highway = tags['highway']
                 except KeyError:
@@ -211,6 +232,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                     elif surface in OTHERS_SURFACE:
                         outags['CARATTER'] = '00'
                     else:
+                        outags['CARATTER'] = ''
                         print(surface)
                 else:
                     if highway == 'via_ferrata':
@@ -221,34 +243,47 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                         outags['CARATTER'] = '01'
                     elif highway in OTHERS_WAYS:
                         outags['CARATTER'] = '01'
+                    else:
+                        outags['CARATTER'] = ''
                 tags = outags
 
-            feat = geojson.Feature(geometry=geom, properties=tags)
+            feat = {'geometry': mapping(geom), 'properties': outags}
             features.append(feat)
-        if infomont:
+        if self.infomont:
             features = split_at_intersection(features)
-        self.wjson = geojson.FeatureCollection(features)
+        self.wjson = features
 
 
-    def write_geojson(self, out, typ='route', infomont=False):
+    def write_geojson(self, out, typ='route', driv="GeoJSON"):
         """Function to write GeoJSON file
 
         :param str out: the path to the output GeoJSON file
         :param str typ: the type of GeoJSON to write, route - way - members are
                         the three accepted values
         """
-        with open(out, 'w') as f:
+        if self.infomont:
             if typ == 'route':
-                if self.gjson is None:
-                    self.create_routes_geojson(infomont=infomont)
-                geojson.dump(self.gjson, f)
+                schema = self.route_schema
             elif typ == 'way':
-                if self.wjson is None:
-                    self.create_way_geojson(infomont=infomont)
-                geojson.dump(self.wjson, f)
+                schema = self.way_schema
+            elif typ == 'members':
+                schema = self.memb_schema
+        with fiona.open(out, 'w', driver=driv, crs=fiona.crs.from_epsg(4326),
+                        schema=schema) as f:
+            if typ == 'route':
+                if len(self.gjson) == 0:
+                    self.create_routes_geojson()
+                for feat in self.gjson:
+                    f.write(feat)
+            elif typ == 'way':
+                if len(self.wjson) == 0:
+                    self.create_way_geojson()
+                for feat in self.wjson:
+                    f.write(feat)
             elif typ == 'members':
                 membs = self.write_relation_members_infomont_geo()
-                geojson.dump(membs, f)
+                for feat in membs:
+                    f.write(feat)
             else:
                 raise ValueError("Accepted value for typ option are: 'route',"
                                  " 'way' and 'members'")
@@ -276,15 +311,14 @@ class CaiRoutesHandler(osmium.SimpleHandler):
            members as comma separated values
         """
         features = []
-        for feat in self.wjson['features']:
+        for feat in self.wjson:
             osmid = feat['properties']['osm_id_way']
             newid = feat['properties']['IDTrat']
             for w in self.members[osmid]:
-                tags = {'IDPerc': w, 'IDtrat': newid}
-                outfeat = geojson.Feature(geometry=feat['geometry'],
-                                          properties=tags)
+                tags = OrderedDict([('IDPerc', w), ('IDtrat', newid)])
+                outfeat = {'geometry': feat['geometry'], 'properties': tags}
                 features.append(outfeat)
-        return geojson.FeatureCollection(features)
+        return features
 
     def write_relations_infomont(self, out):
         """Function to return routes info in csv format
