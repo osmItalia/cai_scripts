@@ -97,9 +97,9 @@ def main():
 
     #initialize the right class to use
     if args.func in ['report', 'route']:
-        cod = CaiOsmRoute(bbox=inbox, area=inarea)
+        cod = CaiOsmRoute(bbox=inbox, area=inarea, debug=args.debug)
     elif args.func == 'office':
-        cod = CaiOsmOffice(bbox=inbox, area=inarea)
+        cod = CaiOsmOffice(bbox=inbox, area=inarea, debug=args.debug)
 
     if args.func == 'report':
         if args.geo:
@@ -107,7 +107,7 @@ def main():
             tags = cod.get_geojson()
         else:
             tags = cod.get_tags_json()
-        cor = CaiOsmReport(tags, geo=args.geo)
+        cor = CaiOsmReport(tags, geo=args.geo, debug=args.debug)
         cor.write_book(args.out, True)
     elif args.func in ['route', 'office']:
         if args.wiki:
@@ -144,7 +144,7 @@ def main():
         elif not os.access(args.out, os.W_OK):
             raise ValueError("The directory {} exists, but it is not "
                              "writable".format(args.out))
-        coi = CaiOsmInfomont(bbox=inbox, area=inarea)
+        coi = CaiOsmInfomont(bbox=inbox, area=inarea, debug=args.debug)
         coi.write_all_geo(args.out)
     else:
         parser.print_help()
