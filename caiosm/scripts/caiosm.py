@@ -128,7 +128,8 @@ def main():
         if args.jsonwrite:
             cod.write(args.jsonwrite, 'tags')
         if args.geojson:
-            cod.get_cairoutehandler()
+            if args.func == 'route':
+                cod.get_cairoutehandler()
             print(cod.get_geojson())
             print("")
         if args.geojsonwrite:
