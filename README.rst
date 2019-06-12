@@ -1,4 +1,4 @@
-caiosm make download, analize and print **Club Alpino Italiano (CAI)** data stored in **OpenStreetMap (OSM)** easy.
+caiosm make download, convert, analize, print and show **Club Alpino Italiano (CAI)** data stored in **OpenStreetMap (OSM)** easy.
 
 To get more info about the collaboration between CAI and OSM read https://wiki.openstreetmap.org/wiki/CAI
 
@@ -8,18 +8,62 @@ How to use
 Command Line tool
 -----------------
 
-`caiosm` is a great tool to get data or print routes info in several format
+`caiosm` is a great tool to work with CAI data; it has several sub-command to run
+different operation
 
 .. code-block:: bash
 
+    # to get more info
+    caiosm --help
+
+Get data
+^^^^^^^^
+
+.. code-block:: bash
+
+    # save Mezzocorona routes  to a GeoJSON file
+    caiosm --place Mezzocorona route -G /tmp/mezzocorona.geojson
+
+    # save Pisa routes to a JSON format
+    caiosm --place Pisa route -J /tmp/pisa.json
+
+    # save Pisa routes in XML OSM format
+    caiosm --place Pisa route -O /tmp/pisa.osm
+
     # print Mezzocorona routes in mediawiki table
-    caiosm --place Mezzocorona -w
+    caiosm --place Mezzocorona route -w
+
+    # print Ischia routes in JSON format
+    caiosm --box 40.643656594949,13.76106262207,40.818226355892,14.062843322754 route -j
+
+    # for more info about route sub-command
+    caiosm route --help
+
+    # print CAI office in Toscana to a JSON format
+    caiosm --place Toscana office -j
+
+Create a PDF report
+^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: bash
 
     # get a PDF file (the name will be ischia.pdf) with all the info of Ischia's routes
-    caiosm --box 40.643656594949,13.76106262207,40.818226355892,14.062843322754 -p ischia
+    caiosm --box 40.643656594949,13.76106262207,40.818226355892,14.062843322754 report -o ischia
 
-    # for more info
-    caiosm --help
+
+    # get a PDF file (the name will be ischia.pdf) with all the info of Ischia's routes
+    # with maps
+    caiosm --box 40.643656594949,13.76106262207,40.818226355892,14.062843322754 report -g -o ischia_geo
+
+Convert Infomont
+^^^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+    # convert Isola d'Elba OSM data in Infomont format
+    # check the result in the /tmp/elba directory
+    caiosm --place "Isola d'Elba" infomont -o /tmp/elba
+
 
 Library
 -------
@@ -33,9 +77,9 @@ To download data Overpass API use `data_from_overpass`
     from caiosm.data_from_overpass import CaiOsmData
     # it is possible to set a place or a bounding box as
     # area of interest
-    cod = CaiOsmData(area='Mezzocorona')
-    #codbox = CaiOsmData(bbox='40.643656594949,13.76106262207,40.818226355892,14.062843322754')
-    
+    cod = CaiOsmRoute(area='Mezzocorona')
+    #codbox = CaiOsmRoute(bbox='40.643656594949,13.76106262207,40.818226355892,14.062843322754')
+
     # get the tags of relations as list of dictionaries
     # check the first value with tags[0]
     tags = cod.get_tags_json()
@@ -59,13 +103,13 @@ and convert it using `pdflatex` utility.
 
     from caiosm.data_print import CaiOsmReport
     # set up using tags obtained before using
-    # cod.get_tags_json() 
+    # cod.get_tags_json()
     cor = CaiOsmReport(tags)
 
     # create PDF file with all the routes in a single file
     # removing the True it will create only tex files
     cor.write_book('mezzocorona',True)
-    # create PDF file for each singular route 
+    # create PDF file for each singular route
     cor.print_single(pdf=True)
 
 
