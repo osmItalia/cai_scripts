@@ -36,9 +36,9 @@ def main():
     parser_get.add_argument('-O', dest='osmwrite', help="name for a file in "
                             "OSM format with CAI routes")
     parser_get.add_argument('-j', dest='json', action='store_true',
-                            help="print CAI routes in a JSON format" )
+                            help="print CAI routes tags in a JSON format" )
     parser_get.add_argument('-J', dest='jsonwrite',
-                            help="name for a JSON file with CAI routes" )
+                            help="name for a JSON file with CAI routes tags" )
     parser_get.add_argument('-g', dest='geojson', action='store_true',
                             help="print CAI routes in a GeoJSON format" )
     parser_get.add_argument('-G', dest='geojsonwrite',
@@ -123,10 +123,16 @@ def main():
         if args.osmwrite:
             cod.write(args.osmwrite, 'osm')
         if args.json:
-            print(cod.get_tags_json())
+            if args.func == 'route':
+                print(cod.get_tags_json())
+            else:
+                print(cod.get_data_json())
             print("")
         if args.jsonwrite:
-            cod.write(args.jsonwrite, 'tags')
+            if args.func == 'route':
+                cod.write(args.jsonwrite, 'tags')
+            else:
+                cod.write(args.jsonwrite, 'json')
         if args.geojson:
             if args.func == 'route':
                 cod.get_cairoutehandler()
