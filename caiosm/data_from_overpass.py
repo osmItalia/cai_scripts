@@ -264,8 +264,11 @@ out qt;"""
             data = json.dumps(self.get_tags_json(network=network))
         elif out_format == 'geojson':
             data = self.get_geojson(network=network)
-            self.cch.write_geojson(out, 'route')
-            return True
+            if self.cch:
+                self.cch.write_geojson(out, 'route')
+                return True
+            else:
+                data = json.dumps(data)
         else:
             raise ValueError('Only csv, osm, wikitable, json, tags, geojson '
                              'format are supported')
