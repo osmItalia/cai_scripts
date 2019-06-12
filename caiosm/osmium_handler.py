@@ -100,6 +100,24 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         self.count += 1
         self.routes[rel.id] = {'tags': tags, 'elems': members}
 
+    def _create_schema(self, typ):
+        """Create the schema for geojson output"""
+        outdict = {}
+        if typ == 'route':
+            for v in self.routes.values():
+                if set(outdict.keys()) != set(v['tags'].keys()):
+                    for t in v['tags'].keys():
+                        if t not in outdict.keys():
+                            outdict[t] = 'str'
+            self.route_schema['properties'] = outdict
+        if typ == 'way':
+            for v in self.ways.values():
+                if set(outdict.keys()) != set(v['tags'].keys()):
+                    for t in v['tags'].keys():
+                        if t not in outdict.keys():
+                            outdict[t] = 'str'
+            self.way_schema['properties'] = outdict
+
     def length(self, epsg="EPSG:3035"):
          """Function to return the total lenght of routes
 
@@ -129,7 +147,6 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         """Function to create GeoJSON geometries for routes"""
         for k, v in self.routes.items():
             lines = []
-            outags = OrderedDict()
             for w in v['elems']:
                 self.members[w].append(k)
                 lines.append(wktlib.loads(self.ways[w]['geom']))
@@ -139,6 +156,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             tagskey = sorted(tags.keys())
             # run operations to be compliant with infomont format
             if self.infomont:
+                outags = OrderedDict()
                 for new, old in ROUTE_FIELD.items():
                     if old in tagskey:
                         outags[new] = tags[old]
@@ -244,7 +262,9 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                         outags['CARATTER'] = '01'
                     else:
                         outags['CARATTER'] = ''
-                tags = outags
+                outags
+            else:
+                outags = tags
 
             feat = {'geometry': mapping(geom), 'properties': outags}
             features.append(feat)
@@ -260,25 +280,40 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         :param str typ: the type of GeoJSON to write, route - way - members are
                         the three accepted values
         """
-        if self.infomont:
-            if typ == 'route':
-                schema = self.route_schema
-            elif typ == 'way':
-                schema = self.way_schema
-            elif typ == 'members':
-                schema = self.memb_schema
+        if typ == 'route':
+            if not self.infomont:
+                self._create_schema('route')
+            schema = self.route_schema
+        elif typ == 'way':
+            if not self.infomont:
+                self._create_schema('way')
+            schema = self.way_schema
+        elif typ == 'members':
+            schema = self.memb_schema
         with fiona.open(out, 'w', driver=driv, crs=fiona.crs.from_epsg(4326),
                         schema=schema, encoding=enc) as f:
             if typ == 'route':
                 if len(self.gjson) == 0:
                     self.create_routes_geojson()
                 for feat in self.gjson:
-                    f.write(feat)
+                    try:
+                        f.write(feat)
+                    except:
+                        for sc in schema['properties'].keys():
+                            if sc not in feat['properties'].keys():
+                                feat['properties'][sc] = ''
+                        f.write(feat)
             elif typ == 'way':
                 if len(self.wjson) == 0:
                     self.create_way_geojson()
                 for feat in self.wjson:
-                    f.write(feat)
+                    try:
+                        f.write(feat)
+                    except:
+                        for sc in schema['properties'].keys():
+                            if sc not in feat['properties'].keys():
+                                feat['properties'][sc] = ''
+                        f.write(feat)
             elif typ == 'members':
                 membs = self.write_relation_members_infomont_geo()
                 for feat in membs:
