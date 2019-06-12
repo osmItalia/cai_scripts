@@ -33,10 +33,7 @@ class CaiOsmReport:
         :param str output_dir: the directory where save the output file
         """
         self.geo = geo
-        if self.geo:
-            self.json = myjson['features']
-        else:
-            self.json = myjson
+        self.json = myjson
         # create jinja environment for latex
         self.latex_jinja_env = jinja2.Environment(
             block_start_string='\BLOCK{',
