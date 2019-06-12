@@ -23,7 +23,7 @@ OSMTILES = {'terrain': 'http://tile.stamen.com/terrain/tileZ/tileX/tileY.png',
 
 class CaiOsmReport:
 
-    def __init__(self, myjson, geo=False, output_dir='.'):
+    def __init__(self, myjson, geo=False, output_dir='.', debug=None):
         """Class to print relation info into a report
 
         :param obj myjson: json containg tags and id of a list of relations, it

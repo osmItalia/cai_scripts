@@ -11,8 +11,8 @@ from .data_from_overpass import CaiOsmRoute
 # class to get data from overpass and convert in infomont system
 class CaiOsmInfomont:
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
-                 driver="ESRI Shapefile"):
-        self.cor = CaiOsmRoute(area=area, bbox=bbox,
+                 driver="ESRI Shapefile", debug=None):
+        self.cor = CaiOsmRoute(area=area, bbox=bbox, debug=debug,
                                bbox_inverted=bbox_inverted)
         self.cor.get_cairoutehandler(infomont=True)
         self.cor.cch.create_way_geojson()
