@@ -264,8 +264,7 @@ out qt;"""
             data = json.dumps(self.get_tags_json(network=network))
         elif out_format == 'geojson':
             data = self.get_geojson(network=network)
-            with open(out, 'w') as fil:
-                geojson.dump(data, fil)
+            self.cch.write_geojson(out, 'route')
             return True
         else:
             raise ValueError('Only csv, osm, wikitable, json, tags, geojson '
@@ -323,7 +322,7 @@ relation
         """
         if self.cch is None:
             self.get_cairoutehandler(network)
-        if self.cch.gjson is None:
+        if len(self.cch.gjson) == 0:
             self.cch.create_routes_geojson()
         return self.cch.gjson
 
@@ -364,7 +363,7 @@ class CaiOsmOffice(CaiOsmData):
 );
 """
 
-    def get_geojson(self):
+    def get_geojson(self, network=''):
         """Function to get a GeoJSON object"""
         data = self.get_data_json(network='')
         features = []
