@@ -21,9 +21,11 @@ from .osmium_handler import CaiRoutesHandler
 DIRFILE = os.path.dirname(os.path.realpath(__file__))
 
 class CaiOsmBase:
+    """Base class to get CAI data using Overpass API"""
+
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
                  separator='|', debug=False, timeout=2500):
-        """Class to get CAI data using Overpass API
+        """Inizialize
 
         :param str area: the name of the area of interest
         :param str bbox: a string with the bounding box of the area, needed
@@ -32,6 +34,7 @@ class CaiOsmBase:
                                     XMIN,YMIN,XMAX,YMAX
         :param str separator: the separator to use for CSV
         :param bool debug: print debug information
+        :param int timeout: the timeout value for overpass
         """
         self.area = area
         if bbox_inverted:
@@ -60,10 +63,22 @@ class CaiOsmBase:
         respData = resp.read()
         return respData.decode(encoding='utf-8', errors='ignore')
 
-# class to get data from overpass and convert in different format
 class CaiOsmData(CaiOsmBase):
+    """Class to get CAI data using Overpass API and convert in different
+       formats"""
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
                  separator='|', debug=False, timeout=2500):
+        """Inizialize
+
+        :param str area: the name of the area of interest
+        :param str bbox: a string with the bounding box of the area, needed
+                         format is YMIN,XMIN,YMAX,XMAX
+        :param bool bbox_inverted: set True id the bbox format is
+                                    XMIN,YMIN,XMAX,YMAX
+        :param str separator: the separator to use for CSV
+        :param bool debug: print debug information
+        :param int timeout: the timeout value for overpass
+        """
         super(CaiOsmData, self).__init__(area=area, bbox=bbox,
                                           bbox_inverted=bbox_inverted,
                                           separator=separator, debug=debug)
@@ -278,8 +293,21 @@ out qt;"""
 
 
 class CaiOsmRoute(CaiOsmData):
+    """Class to get CAI routes using Overpass API and convert in different
+       formats"""
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
                  separator='|', debug=False, timeout=2500):
+        """Inizialize
+
+        :param str area: the name of the area of interest
+        :param str bbox: a string with the bounding box of the area, needed
+                         format is YMIN,XMIN,YMAX,XMAX
+        :param bool bbox_inverted: set True id the bbox format is
+                                    XMIN,YMIN,XMAX,YMAX
+        :param str separator: the separator to use for CSV
+        :param bool debug: print debug information
+        :param int timeout: the timeout value for overpass
+        """
         super(CaiOsmRoute, self).__init__(area=area, bbox=bbox, timeout=timeout,
                                           bbox_inverted=bbox_inverted,
                                           separator=separator, debug=debug)
@@ -331,8 +359,22 @@ relation
 
 
 class CaiOsmOffice(CaiOsmData):
+    """Class to get CAI offices using Overpass API and convert in different
+       formats"""
+
     def __init__(self, area='Italia', bbox=None, bbox_inverted=False,
                  separator='|', debug=False, timeout=2500):
+        """Inizialize
+
+        :param str area: the name of the area of interest
+        :param str bbox: a string with the bounding box of the area, needed
+                         format is YMIN,XMIN,YMAX,XMAX
+        :param bool bbox_inverted: set True id the bbox format is
+                                    XMIN,YMIN,XMAX,YMAX
+        :param str separator: the separator to use for CSV
+        :param bool debug: print debug information
+        :param int timeout: the timeout value for overpass
+        """
         super(CaiOsmOffice, self).__init__(area=area, bbox=bbox,
                                            timeout=timeout,
                                            bbox_inverted=bbox_inverted,
@@ -399,8 +441,22 @@ class CaiOsmOffice(CaiOsmData):
         return geojson.FeatureCollection(features)
 
 class CaiOsmSourceRef(CaiOsmData):
+    """Class to get CAI source:ref values using Overpass API and convert in
+    different formats"""
+
     def __init__(self, area='Italia', bbox=None, separator='|', debug=False,
                  timeout=2500):
+        """Inizialize
+
+        :param str area: the name of the area of interest
+        :param str bbox: a string with the bounding box of the area, needed
+                         format is YMIN,XMIN,YMAX,XMAX
+        :param bool bbox_inverted: set True id the bbox format is
+                                    XMIN,YMIN,XMAX,YMAX
+        :param str separator: the separator to use for CSV
+        :param bool debug: print debug information
+        :param int timeout: the timeout value for overpass
+        """
         super(CaiOsmSourceRef, self).__init__(area=area, bbox=bbox,
                                               timeout=timeout,
                                               separator=separator, debug=debug)
@@ -511,7 +567,21 @@ relation
         return True
 
 class CaiOsmRouteSourceRef(CaiOsmRoute):
+    """Class to get CAI routes for a single CAI group using Overpass API and
+    convert in different formats"""
+
     def __init__(self, sourceref, separator='|', debug=False, timeout=2500):
+        """Inizialize
+
+        :param str area: the name of the area of interest
+        :param str bbox: a string with the bounding box of the area, needed
+                         format is YMIN,XMIN,YMAX,XMAX
+        :param bool bbox_inverted: set True id the bbox format is
+                                    XMIN,YMIN,XMAX,YMAX
+        :param str separator: the separator to use for CSV
+        :param bool debug: print debug information
+        :param int timeout: the timeout value for overpass
+        """
         super(CaiOsmRouteSourceRef, self).__init__(separator=separator,
                                                    timeout=timeout,
                                                    debug=debug)
@@ -525,9 +595,23 @@ relation
         self.query = query + source + """;"""
 
 class CaiOsmRouteDiff(CaiOsmBase):
+    """Class to get CAI route diff using Overpass API and convert in different
+       formats"""
+
     def __init__(self, startdate=None, enddate=None, daydiff=1, area=None,
                  bbox=None, sourceref=None, separator='|', debug=False,
                  timeout=2500):
+        """Inizialize
+
+        :param str area: the name of the area of interest
+        :param str bbox: a string with the bounding box of the area, needed
+                         format is YMIN,XMIN,YMAX,XMAX
+        :param bool bbox_inverted: set True id the bbox format is
+                                    XMIN,YMIN,XMAX,YMAX
+        :param str separator: the separator to use for CSV
+        :param bool debug: print debug information
+        :param int timeout: the timeout value for overpass
+        """
         super(CaiOsmRouteDiff, self).__init__(area=area, bbox=bbox,
                                               timeout=timeout,
                                               separator=separator, debug=debug)
@@ -574,8 +658,11 @@ relation
         self.osmdata = self._get_data(instr)
         return self.osmdata
 
-    def get_changeset(self, sourceref=None, network='lwn'):
-        """Return the changeset id"""
+    def get_changeset(self, network='lwn'):
+        """Return the changeset id
+
+        :param str network: the network level to query, default 'lwn'
+        """
         if not self.osmdata:
             self.get_data_osm(network=network)
         jsonosm = xmltodict.parse(self.osmdata)

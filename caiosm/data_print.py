@@ -22,9 +22,10 @@ OSMTILES = {'terrain': 'http://tile.stamen.com/terrain/tileZ/tileX/tileY.png',
             'wiki': 'https://maps.wikimedia.org/osm-intl/tileZ/tileX/tileY.png'}
 
 class CaiOsmReport:
+    """Class to print route info into a report"""
 
     def __init__(self, myjson, geo=False, output_dir='.', debug=None):
-        """Class to print relation info into a report
+        """Inizialize
 
         :param obj myjson: json containg tags and id of a list of relations, it
                            is possible to get it from

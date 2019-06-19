@@ -50,6 +50,12 @@ class CaiRoutesHandler(osmium.SimpleHandler):
     format"""
 
     def __init__(self, separator=",", infomont=False):
+        """Inizialize function
+
+        :param str separator: the separator string for CSV output
+        :param bool infomont: if the output should follow Infomont format
+        """
+
         osmium.SimpleHandler.__init__(self)
         self.infomont = infomont
         self.count = 0
@@ -101,7 +107,11 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         self.routes[rel.id] = {'tags': tags, 'elems': members}
 
     def _create_schema(self, typ):
-        """Create the schema for geojson output"""
+        """Create the schema for geojson output
+
+        :param str typ: type of the schema to improve, parameter could be route
+                        or way
+        """
         outdict = {}
         if typ == 'route':
             for v in self.routes.values():
@@ -117,6 +127,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                         if t not in outdict.keys():
                             outdict[t] = 'str'
             self.way_schema['properties'] = outdict
+
 
     def length(self, epsg="EPSG:3035"):
          """Function to return the total lenght of routes
@@ -205,10 +216,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             self.gjson.append(feat)
 
     def create_way_geojson(self):
-        """Function to create GeoJSON geometries for ways
-
-        :param bool infomont: perform infomont checks
-        """
+        """Function to create GeoJSON geometries for ways"""
         features = []
         for k, v in self.ways.items():
             geom = LineString(wktlib.loads(v['geom']))
@@ -279,6 +287,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         :param str out: the path to the output GeoJSON file
         :param str typ: the type of GeoJSON to write, route - way - members are
                         the three accepted values
+        :param str driv: the OGR driver to use, default is GeoJSON
+        :param str enc: the encoding value to use
         """
         if typ == 'route':
             if not self.infomont:
@@ -328,7 +338,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
 
     def write_relation_members_infomont(self, out):
         """Function to write a csv file with all the relation and its
-           members as comma separated values
+        members as comma separated values
 
         :param str out: the path to the output CSV file
         """
