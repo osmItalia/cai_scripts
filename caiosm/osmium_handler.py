@@ -273,7 +273,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         self.wjson = features
 
 
-    def write_geojson(self, out, typ='route', driv="GeoJSON", enc='utf-8'):
+    def write_geojson(self, out, typ='route', driv="GeoJSON", enc='UTF-8'):
         """Function to write GeoJSON file
 
         :param str out: the path to the output GeoJSON file
@@ -321,6 +321,10 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             else:
                 raise ValueError("Accepted value for typ option are: 'route',"
                                  " 'way' and 'members'")
+        if driv == "ESRI Shapefile":
+            cpgfile = out.replace('.shp', '.cpg')
+            with open(cpgfile, 'w') as cpg:
+                cpg.write(enc)
 
     def write_relation_members_infomont(self, out):
         """Function to write a csv file with all the relation and its
