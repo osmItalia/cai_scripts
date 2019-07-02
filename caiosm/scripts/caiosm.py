@@ -7,6 +7,7 @@ Created on Tue Jan  8 11:53:50 2019
 """
 import os
 import argparse
+import shutil
 from caiosm.data_from_overpass import CaiOsmRoute
 from caiosm.data_from_overpass import CaiOsmOffice
 from caiosm.data_print import CaiOsmReport
@@ -58,6 +59,9 @@ def main():
     parser_infomont.set_defaults(func='infomont')
     parser_infomont.add_argument('-o', dest='out', required=True,
                                  help="the path to the output directory "
+                                 "containing the three output files")
+    parser_infomont.add_argument('-z', dest='zip', action='store_true',
+                                 help="create a zip file of the directory "
                                  "containing the three output files")
     parser_office = subparsers.add_parser('office', help='Get CAI office data'
                                           ' in several formats')
@@ -152,5 +156,7 @@ def main():
                              "writable".format(args.out))
         coi = CaiOsmInfomont(bbox=inbox, area=inarea, debug=args.debug)
         coi.write_all_geo(args.out)
+        if args.zip:
+            shutil.make_archive(os.path.split(args.out)[-1], 'zip', args.out)
     else:
         parser.print_help()
