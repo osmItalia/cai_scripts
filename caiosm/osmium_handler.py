@@ -144,7 +144,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
              # for each member of the route crea a linea and append to the list
              for w in v['elems']:
                  if w not in alreadid:
-                     lines.append(wktlib.loads(self.ways[w]))
+                     lines.append(wktlib.loads(self.ways[w]['geom']))
                      alreadid.append(w)
              # create the geometry
              geom = MultiLineString(lines)
@@ -281,7 +281,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         self.wjson = features
 
 
-    def write_geojson(self, out, typ='route', driv="GeoJSON", enc='UTF-8'):
+    def write_geojson(self, out, typ='route', driv="GeoJSON", enc='utf-8',
+                      epsg=4326):
         """Function to write GeoJSON file
 
         :param str out: the path to the output GeoJSON file
@@ -300,12 +301,18 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             schema = self.way_schema
         elif typ == 'members':
             schema = self.memb_schema
-        with fiona.open(out, 'w', driver=driv, crs=fiona.crs.from_epsg(4326),
+        if epsg != 4326:
+            inepsg = "EPSG:{}".format(epsg)
+            project = partial(pyproj.transform, pyproj.Proj(init='EPSG:4326'),
+                              pyproj.Proj(init=inepsg))
+        with fiona.open(out, 'w', driver=driv, crs=fiona.crs.from_epsg(epsg),
                         schema=schema, encoding=enc) as f:
             if typ == 'route':
                 if len(self.gjson) == 0:
                     self.create_routes_geojson()
                 for feat in self.gjson:
+                    if epsg != 4326:
+                        feat = transform(project, feat)
                     try:
                         f.write(feat)
                     except:
@@ -317,6 +324,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                 if len(self.wjson) == 0:
                     self.create_way_geojson()
                 for feat in self.wjson:
+                    if epsg != 4326:
+                        feat = transform(project, feat)
                     try:
                         f.write(feat)
                     except:
@@ -327,6 +336,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             elif typ == 'members':
                 membs = self.write_relation_members_infomont_geo()
                 for feat in membs:
+                    if epsg != 4326:
+                        feat = transform(project, feat)
                     f.write(feat)
             else:
                 raise ValueError("Accepted value for typ option are: 'route',"

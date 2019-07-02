@@ -13,7 +13,7 @@ class CaiOsmInfomont:
     """Class to convert OSM data into Infomont schema and create shapefile"""
 
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
-                 driver="ESRI Shapefile", debug=None):
+                 driver="ESRI Shapefile", epsg=32632, debug=None):
         """Inizialize function
         :param str area: the name of the area of interest
         :param str bbox: a string with the bounding box of the area, needed
@@ -24,19 +24,22 @@ class CaiOsmInfomont:
         :param bool debug: print debug information
         """
 
-        self.cor = CaiOsmRoute(area=area, bbox=bbox, debug=debug,
+        self.debug = debug
+        self.cor = CaiOsmRoute(area=area, bbox=bbox, debug=self.debug,
                                bbox_inverted=bbox_inverted)
         self.cor.get_cairoutehandler(infomont=True)
         self.cor.cch.create_way_geojson()
         self.cor.cch.create_routes_geojson()
         self.driver = driver
+        self.epsg = epsg
 
     def write_ways(self, outpath):
         """Write routes' ways in a OGR format
 
         :param str outpath: the path to the output file
         """
-        self.cor.cch.write_geojson(outpath, typ='way', driv=self.driver)
+        self.cor.cch.write_geojson(outpath, typ='way', driv=self.driver,
+                                   epsg=self.epsg)
 
     def write_routes(self, outpath):
         """Write routes info in a OGR format
@@ -50,14 +53,16 @@ class CaiOsmInfomont:
 
         :param str outpath: the path to the output file
         """
-        self.cor.cch.write_geojson(outpath, typ='route', driv=self.driver)
+        self.cor.cch.write_geojson(outpath, typ='route', driv=self.driver,
+                                   epsg=self.epsg)
 
     def write_routes_ways_geo(self, outpath):
         """Write routes members info in a OGR format
 
         :param str outpath: the path to the output file
         """
-        self.cor.cch.write_geojson(outpath, typ='members', driv=self.driver)
+        self.cor.cch.write_geojson(outpath, typ='members', driv=self.driver,
+                                   epsg=self.epsg)
 
     def write_routes_ways(self, outpath):
         """Write routes members info in CSV format
@@ -80,6 +85,12 @@ class CaiOsmInfomont:
 
         :param str outdir: the path to the directory containing output files
         """
+        if self.debug:
+            print("Writing routes")
         self.write_routes_geo(os.path.join(outdir, 'sent_perc.shp'))
+        if self.debug:
+            print("Writing ways")
         self.write_ways(os.path.join(outdir, 'trt_sent.shp'))
+        if self.debug:
+            print("Writing route members")
         self.write_routes_ways_geo(os.path.join(outdir, 'trt_perc.shp'))
