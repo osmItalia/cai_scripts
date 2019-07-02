@@ -291,12 +291,18 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             schema = self.way_schema
         elif typ == 'members':
             schema = self.memb_schema
+        if epsg != 4326:
+            inepsg = "EPSG:{}".format(epsg)
+            project = partial(pyproj.transform, pyproj.Proj(init='EPSG:4326'),
+                              pyproj.Proj(init=inepsg))
         with fiona.open(out, 'w', driver=driv, crs=fiona.crs.from_epsg(epsg),
                         schema=schema, encoding=enc) as f:
             if typ == 'route':
                 if len(self.gjson) == 0:
                     self.create_routes_geojson()
                 for feat in self.gjson:
+                    if epsg != 4326:
+                        feat = transform(project, feat)
                     try:
                         f.write(feat)
                     except:
@@ -308,6 +314,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                 if len(self.wjson) == 0:
                     self.create_way_geojson()
                 for feat in self.wjson:
+                    if epsg != 4326:
+                        feat = transform(project, feat)
                     try:
                         f.write(feat)
                     except:
@@ -318,6 +326,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             elif typ == 'members':
                 membs = self.write_relation_members_infomont_geo()
                 for feat in membs:
+                    if epsg != 4326:
+                        feat = transform(project, feat)
                     f.write(feat)
             else:
                 raise ValueError("Accepted value for typ option are: 'route',"
