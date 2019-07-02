@@ -133,7 +133,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
              # for each member of the route crea a linea and append to the list
              for w in v['elems']:
                  if w not in alreadid:
-                     lines.append(wktlib.loads(self.ways[w]))
+                     lines.append(wktlib.loads(self.ways[w]['geom']))
                      alreadid.append(w)
              # create the geometry
              geom = MultiLineString(lines)
