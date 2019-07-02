@@ -273,7 +273,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         self.wjson = features
 
 
-    def write_geojson(self, out, typ='route', driv="GeoJSON", enc='utf-8'):
+    def write_geojson(self, out, typ='route', driv="GeoJSON", enc='utf-8',
+                      epsg=4326):
         """Function to write GeoJSON file
 
         :param str out: the path to the output GeoJSON file
@@ -290,7 +291,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             schema = self.way_schema
         elif typ == 'members':
             schema = self.memb_schema
-        with fiona.open(out, 'w', driver=driv, crs=fiona.crs.from_epsg(4326),
+        with fiona.open(out, 'w', driver=driv, crs=fiona.crs.from_epsg(epsg),
                         schema=schema, encoding=enc) as f:
             if typ == 'route':
                 if len(self.gjson) == 0:
