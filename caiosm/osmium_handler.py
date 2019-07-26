@@ -13,6 +13,7 @@ import shapely.wkt as wktlib
 from shapely.geometry import MultiLineString
 from shapely.geometry import LineString
 from shapely.geometry import mapping
+from shapely.geometry import shape
 from shapely.ops import transform
 import fiona
 import pyproj
@@ -302,7 +303,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                     self.create_routes_geojson()
                 for feat in self.gjson:
                     if epsg != 4326:
-                        feat = transform(project, feat)
+                        newgeom = transform(project, shape(feat['geometry']))
+                        feat['geometry'] = mapping(newgeom)
                     try:
                         f.write(feat)
                     except:
@@ -315,7 +317,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                     self.create_way_geojson()
                 for feat in self.wjson:
                     if epsg != 4326:
-                        feat = transform(project, feat)
+                        newgeom = transform(project, shape(feat['geometry']))
+                        feat['geometry'] = mapping(newgeom)
                     try:
                         f.write(feat)
                     except:
@@ -327,7 +330,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                 membs = self.write_relation_members_infomont_geo()
                 for feat in membs:
                     if epsg != 4326:
-                        feat = transform(project, feat)
+                        newgeom = transform(project, shape(feat['geometry']))
+                        feat['geometry'] = mapping(newgeom)
                     f.write(feat)
             else:
                 raise ValueError("Accepted value for typ option are: 'route',"
