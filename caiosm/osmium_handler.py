@@ -50,7 +50,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
     """Class to parse CAI routes from OSM file and return them in different
     format"""
 
-    def __init__(self, separator=",", infomont=False):
+    def __init__(self, separator=",", infomont=False, debug=False):
         """Inizialize function
 
         :param str separator: the separator string for CSV output
@@ -58,6 +58,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         """
 
         osmium.SimpleHandler.__init__(self)
+        self.debug = debug
         self.infomont = infomont
         self.count = 0
         self.routes = {}
