@@ -199,7 +199,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                         else:
                             outags['segni'] = '003'
                     elif 'symbol:it' in tagskey:
-                        if 'non segnalato' in tags['symbol']:
+                        if 'non segnalato' in tags['symbol:it']:
                             outags['segni'] = '001'
                         elif 'su bandierina bianca e rossa' in tags['symbol:it'] \
                              or 'segnavia bianco e rosso' in tags['symbol:it']:
@@ -222,8 +222,12 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         for k, v in self.ways.items():
             geom = LineString(wktlib.loads(v['geom']))
             tags = {'id': k}
+            if self.debug:
+                print(v)
             for p in v['tags']:
                 tags[p.k] = p.v
+            if self.debug:
+                print(tags)
             # run operations to be compliant with infomont format
             if self.infomont:
                 outags = OrderedDict([('osm_id_way', k)])
