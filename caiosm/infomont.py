@@ -27,8 +27,14 @@ class CaiOsmInfomont:
         self.debug = debug
         self.cor = CaiOsmRoute(area=area, bbox=bbox, debug=self.debug,
                                bbox_inverted=bbox_inverted)
+        if self.debug:
+            print("Before get handler")
         self.cor.get_cairoutehandler(infomont=True)
+        if self.debug:
+            print("Before create way")
         self.cor.cch.create_way_geojson()
+        if self.debug:
+            print("Before create route ")
         self.cor.cch.create_routes_geojson()
         self.driver = driver
         self.epsg = epsg
