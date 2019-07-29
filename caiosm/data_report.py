@@ -8,12 +8,7 @@ Created on Wed Mar 27 11:49:25 2019
 from time import sleep
 
 from caiosm.data_from_overpass import CaiOsmRoute
-
-REGIONI = ["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna",
-           "Friuli Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche",
-           "Molise", "Piemonte", "Puglia", "Sardegna", "Sicilia", "Toscana",
-           "Trentino-Alto Adige/Südtirol", "Umbria", "Veneto",
-           "Valle d'Aosta/Vallée d'Aoste"]
+from caiosm.functions import REGIONI
 
 class CaiOsmTable:
     """Print or write to a file statistics for regions, it calculate number

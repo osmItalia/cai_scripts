@@ -24,6 +24,12 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 from PIL import Image, ImageChops
 
+REGIONI = ["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna",
+           "Friuli Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche",
+           "Molise", "Piemonte", "Puglia", "Sardegna", "Sicilia", "Toscana",
+           "Trentino-Alto Adige/Südtirol", "Umbria", "Veneto",
+           "Valle d'Aosta/Vallée d'Aoste"]
+
 # functions
 def invert_bbox(bbox):
     """Convert the bounding box from XMIN,YMIN,XMAX,YMAX to YMIN,XMIN,YMAX,XMAX
