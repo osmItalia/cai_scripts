@@ -16,8 +16,15 @@ REGIONI = ["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna",
            "Valle d'Aosta/Vallée d'Aoste"]
 
 class CaiOsmTable:
+    """Print or write to a file statistics for regions, it calculate number
+    and lenght routes for each region"""
 
     def __init__(self, regions=REGIONI):
+        """Initialize function
+
+        :param list regions: a list of region to process, by default it
+                             execute for all Italian regions
+        """
         self.regions = regions
 
     def print_region(self, reg, unit='km'):
@@ -30,11 +37,8 @@ class CaiOsmTable:
         count = cod.cch.count
         return leng, count
 
-    def print_regions(self, output=None):
-        """Return number of routes and total lenght for each region
-
-        :param str output: the path for output file
-        """
+    def print_regions(self):
+        """Return number of routes and total lenght for each region"""
         for re in self.regions:
             l, c = self.print_region(re)
             print("{re}: {to} percorsi, lunghezza totale {le} "

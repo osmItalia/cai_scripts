@@ -209,10 +209,16 @@ def send_mail(sub, mess, to, attach=None):
         print(to)
 
 def get_points(lines):
+    """Get points of intersection beetween to lines
+
+    :param list lines: a list of dictionary containing geometri in WKT format
+    """
     inters = []
+    # iterate all the combinations between lines
     for l1,l2 in itertools.combinations(lines, 2):
         line1 = shape(l1['geometry'])
         line2 = shape(l2['geometry'])
+        # if the two lines intersect get the points
         if  line1.intersects(line2):
             inter = line1.intersection(line2)
             if "Point" == inter.type:
@@ -240,9 +246,15 @@ def get_points(lines):
     return MultiPoint(inters)
 
 def split_at_intersection(lines):
+    """Split input lines at intersection
+
+    :param list lines: a list of dictionary containing geometri in WKT format
+    """
+    # get intersection point
     mp = get_points(lines)
     x = 0
     output = []
+    # for each line split it
     for line in lines:
         splitlines = split(shape(line['geometry']), mp)
         for sl in splitlines:

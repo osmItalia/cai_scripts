@@ -4,9 +4,20 @@ import geopandas as gpd
 
 
 class CaiOsmPg():
+    """Function to work with route data imported into PostgreSQL/PostGIS
+       database with osm2pgsql"""
 
     def __init__(self, dbconnection, outdir="/tmp", prefix='planet_osm',
                  network='lwn', separator='|', debug=False):
+        """Inizialize
+
+        :param obj dbconnection: a psycopg2 connection
+        :param str outdir: the directory where to save file with info
+        :param str prefix: the prefix used in osm2pgsql
+        :param str network: the network tag to consider
+        :param str separator: the separator string for CSV output
+        :param bool debug: set debug
+        """
         self.conn = psycopg2.connect(dbconnection)
         self.outdir = outdir
         self.prefix = prefix
@@ -60,6 +71,7 @@ class CaiOsmPg():
         return True
 
     def route_count_lenght(self):
+        """Return the count and lenght of routes"""
         if self.regsql:
             sql = "select reg, count(osm_id), round(cast(sum(st_length(" \
                   "ST_Intersection(way, poly))) / 1000 as numeric), 2) as " \
@@ -75,7 +87,7 @@ class CaiOsmPg():
         return self._execute(sql)
 
     def not_route_lenght(self, highways=None):
-        """"""
+        """NOT WORKING"""
         if self.regsql:
             sql = "select reg, round(cast(sum(st_length(ST_Intersection(way," \
                   " poly))) / 1000 as numeric), 2) as km_noCAI from ({reg}) " \
@@ -126,7 +138,7 @@ class CaiOsmPg():
         plt.savefig(output)
 
     def print_italy(self, fname='cai_map_italy.png'):
-        # image for italy
+        """Create an simple map for the entire Italy with routes"""
         paths = gpd.read_postgis("select * from planet_osm_line where {}".format(self.cai_where),
                                  self.conn, geom_col='way',
                                  crs={'init': u'epsg:32632'})
@@ -135,7 +147,7 @@ class CaiOsmPg():
         self._print(region, paths)
 
     def print_region(self, region):
-        # get the data for region
+        """Create an simple map for the selected region with routes"""
         paths = gpd.read_postgis("select distinct cai.* from (select name as "\
                                  "reg, st_union(way) as poly from planet_osm" \
                                  "_polygon where admin_level='4' and boundary" \
@@ -156,6 +168,7 @@ class CaiOsmPg():
         self._print(region, paths)
 
     def print_all_regions(self):
+        """Create an simple map for all the regions with routes"""
         if not self.regions:
             self.get_administrative_bounds()
         for region in self.regions:
