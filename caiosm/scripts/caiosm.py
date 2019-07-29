@@ -8,12 +8,14 @@ Created on Tue Jan  8 11:53:50 2019
 import os
 import argparse
 import shutil
+import faulthandler
 from caiosm.data_from_overpass import CaiOsmRoute
 from caiosm.data_from_overpass import CaiOsmOffice
 from caiosm.data_print import CaiOsmReport
 from caiosm.infomont import CaiOsmInfomont
 
 def main():
+    faulthandler.enable()
     parser = argparse.ArgumentParser(description='Work with CAI OSM data')
     subparsers = parser.add_subparsers(help='caiosm sub commands help')
     parser_get = subparsers.add_parser('route', help='Get CAI route data'
