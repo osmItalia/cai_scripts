@@ -13,6 +13,13 @@ from caiosm.data_from_overpass import CaiOsmRoute
 from caiosm.data_from_overpass import CaiOsmOffice
 from caiosm.data_print import CaiOsmReport
 from caiosm.infomont import CaiOsmInfomont
+from caiosm.functions import REGIONI
+
+def create_infomont(inarea, inbox, args):
+    coi = CaiOsmInfomont(bbox=inbox, area=inarea, debug=args.debug)
+    coi.write_all_geo(args.out)
+    if args.zip:
+        shutil.make_archive(os.path.split(args.out)[-1], 'zip', args.out)
 
 def main():
     faulthandler.enable()
@@ -62,6 +69,8 @@ def main():
     parser_infomont.add_argument('-o', dest='out', required=True,
                                  help="the path to the output directory "
                                  "containing the three output files")
+    parser_infomont.add_argument('-r', dest='regs', required=True,
+                                 help="create all Italian regions")
     parser_infomont.add_argument('-z', dest='zip', action='store_true',
                                  help="create a zip file of the directory "
                                  "containing the three output files")
@@ -91,7 +100,10 @@ def main():
     args = parser.parse_args()
 
     if not args.place and not args.box:
-        raise ValueError("one between --place or --box options is required")
+        if args.func == 'infomont' and args.regs:
+            pass
+        else:
+            raise ValueError("one between --place or --box options is required")
     elif args.place and args.box:
         raise ValueError("Please select only one between --place and --box")
     elif args.place:
@@ -156,9 +168,18 @@ def main():
         elif not os.access(args.out, os.W_OK):
             raise ValueError("The directory {} exists, but it is not "
                              "writable".format(args.out))
-        coi = CaiOsmInfomont(bbox=inbox, area=inarea, debug=args.debug)
-        coi.write_all_geo(args.out)
-        if args.zip:
-            shutil.make_archive(os.path.split(args.out)[-1], 'zip', args.out)
+        if inbox or inarea:
+            try:
+                create_infomont(inarea, inbox, args)
+            except:
+                raise ValueError("Error creating infomont data")
+        elif args.regs:
+            for reg in REGIONI:
+                try:
+                    create_infomont(reg, None, args)
+                except:
+                    raise ValueError("Error creating infomont data for region"
+                                     " {}".format(reg))
+
     else:
         parser.print_help()
