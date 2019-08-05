@@ -70,6 +70,7 @@ def main():
                                  help="the path to the output directory "
                                  "containing the three output files")
     parser_infomont.add_argument('-r', dest='regs', required=True,
+                                 action='store_true',
                                  help="create all Italian regions")
     parser_infomont.add_argument('-z', dest='zip', action='store_true',
                                  help="create a zip file of the directory "
@@ -168,18 +169,18 @@ def main():
         elif not os.access(args.out, os.W_OK):
             raise ValueError("The directory {} exists, but it is not "
                              "writable".format(args.out))
-        if inbox or inarea:
-            try:
-                create_infomont(inarea, inbox, args)
-            except:
-                raise ValueError("Error creating infomont data")
-        elif args.regs:
+        if args.regs:
             for reg in REGIONI:
                 try:
                     create_infomont(reg, None, args)
                 except:
                     raise ValueError("Error creating infomont data for region"
                                      " {}".format(reg))
+        elif inbox or inarea:
+            try:
+                create_infomont(inarea, inbox, args)
+            except:
+                raise ValueError("Error creating infomont data")
 
     else:
         parser.print_help()
