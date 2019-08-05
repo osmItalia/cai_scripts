@@ -247,7 +247,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                 elif highway in NATURAL_WAYS:
                     outags['TIPOLOGIA'] = '02'
                 else:
-                    print(highway)
+                    if self.debug:
+                        print(highway)
                 # check if the highway has surface tag, if it exist use it
                 # otherwise use highway tag to set the surface
                 if 'surface' in v['tags'].keys():
@@ -262,7 +263,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                         outags['CARATTER'] = '00'
                     else:
                         outags['CARATTER'] = ''
-                        print(surface)
+                        if surface and self.debug:
+                            print(surface)
                 else:
                     if highway == 'via_ferrata':
                         outags['CARATTER'] = '00'
