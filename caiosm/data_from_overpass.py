@@ -9,6 +9,7 @@ import os
 import json
 import geojson
 import urllib.request
+import tempfile
 from datetime import date
 from datetime import timedelta
 import dateutil.parser
@@ -121,7 +122,7 @@ out;
         return self._get_data(instr)
 
 
-    def get_data_osm(self, network='lwn'):
+    def get_data_osm(self, sort=True, network='lwn', remove=True):
         """Function to return data in the original OSM format
 
         :param str network: the network level to query, default 'lwn'
@@ -165,6 +166,22 @@ out;"""
         #    output = temp_osm.read()
         #pdb.set_trace()
         #return output
+        if sort:
+            mir = osmium.MergeInputReader()
+            mir.add_buffer(data.encode('utf-8'), "osm")
+            # the code stop here after printing the xml osm data
+            tempname = tempfile.mkstemp(suffix='.osm')[1]
+
+            with open(tempname, 'w') as temp_osm:
+                os.unlink(temp_osm.name)
+                wh = osmium.WriteHandler(temp_osm.name)
+                mir.apply(wh, idx="flex_mem")
+                wh.close()
+                temp_osm.close()
+            with open(tempname, 'r') as temp_osm:
+                data = temp_osm.read()
+            if remove:
+                os.remove(tempname)
         return data
 
     def get_data_json(self, network='lwn'):
@@ -338,7 +355,7 @@ relation
 
         :param str network: the network level to query, default 'lwn'
         """
-        data = self.get_data_osm(network=network)
+        data = self.get_data_osm(sort=False, network=network)
         self.cch = CaiRoutesHandler(infomont=infomont)
         # trick to solve the problem that overpass data ar not sorted
         mir = osmium.MergeInputReader()
