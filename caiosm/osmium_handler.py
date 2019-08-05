@@ -93,7 +93,10 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             self.ways[way.id]['geom'] = WKTFAB.create_linestring(way)
         except Exception:
             print("Error creating geometry for way {}".format(way.id))
-        self.ways[way.id]['tags'] = way.tags
+        tags = {'id': way.id}
+        for p in way.tags:
+            tags[p.k] = p.v
+        self.ways[way.id]['tags'] = tags
 
     def relation(self, rel):
         """Function to parse relations"""
@@ -222,18 +225,13 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         features = []
         for k, v in self.ways.items():
             geom = LineString(wktlib.loads(v['geom']))
-            tags = {'id': k}
             if self.debug:
                 print(v)
-            for p in v['tags']:
-                tags[p.k] = p.v
-            if self.debug:
-                print(tags)
             # run operations to be compliant with infomont format
             if self.infomont:
                 outags = OrderedDict([('osm_id_way', k)])
                 try:
-                    highway = tags['highway']
+                    highway = v['tags']['highway']
                 except KeyError:
                     print("way {} without highway tag".format(k))
                     highway = None
@@ -252,8 +250,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                     print(highway)
                 # check if the highway has surface tag, if it exist use it
                 # otherwise use highway tag to set the surface
-                if 'surface' in tags.keys():
-                    surface = tags['surface']
+                if 'surface' in v['tags'].keys():
+                    surface = v['tags']['surface']
                     if surface in ASPHALT_SURFACE:
                         outags['CARATTER'] = '01'
                     elif surface in OFFROAD_SURFACE:
@@ -278,7 +276,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                         outags['CARATTER'] = ''
                 outags
             else:
-                outags = tags
+                outags = v['tags']
 
             feat = {'geometry': mapping(geom), 'properties': outags}
             features.append(feat)
@@ -307,6 +305,9 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             schema = self.way_schema
         elif typ == 'members':
             schema = self.memb_schema
+        else:
+            raise ValueError("Accepted value for typ option are: 'route',"
+                                 " 'way' and 'members'")
         if epsg != 4326:
             inepsg = "EPSG:{}".format(epsg)
             project = partial(pyproj.transform, pyproj.Proj(init='EPSG:4326'),
