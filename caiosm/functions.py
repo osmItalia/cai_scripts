@@ -270,3 +270,14 @@ def split_at_intersection(lines):
                            'properties': feats})
             x += 1
     return output
+
+def make_safe_filename(s):
+    """Function to clean a variable for file name
+    https://stackoverflow.com/questions/7406102/create-sane-safe-filename-from-any-unsafe-string
+    """
+    def safe_char(c):
+        if c.isalnum():
+            return c
+        else:
+            return "_"
+    return "".join(safe_char(c) for c in s).rstrip("_")
