@@ -14,12 +14,15 @@ from caiosm.data_from_overpass import CaiOsmOffice
 from caiosm.data_print import CaiOsmReport
 from caiosm.infomont import CaiOsmInfomont
 from caiosm.functions import REGIONI
+from caiosm.functions import make_safe_filename
 
-def create_infomont(inarea, inbox, args):
+def create_infomont(inarea, inbox, args, out=None):
+    if not out:
+        out = args.out
     coi = CaiOsmInfomont(bbox=inbox, area=inarea, debug=args.debug)
-    coi.write_all_geo(args.out)
+    coi.write_all_geo(out)
     if args.zip:
-        shutil.make_archive(os.path.split(args.out)[-1], 'zip', args.out)
+        shutil.make_archive(os.path.split(out)[-1], 'zip', out)
 
 def main():
     faulthandler.enable()
@@ -171,8 +174,11 @@ def main():
                              "writable".format(args.out))
         if args.regs:
             for reg in REGIONI:
+                outpath = os.path.join(args.out, make_safe_filename(reg))
+                if not os.path.isdir(outpath):
+                    os.makedirs(outpath)
                 try:
-                    create_infomont(reg, None, args)
+                    create_infomont(reg, None, args, outpath)
                 except:
                     raise ValueError("Error creating infomont data for region"
                                      " {}".format(reg))
