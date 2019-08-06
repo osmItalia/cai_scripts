@@ -174,6 +174,8 @@ def main():
                              "writable".format(args.out))
         if args.regs:
             for reg in REGIONI:
+                if args.debug:
+                    print("-------- Processing : {} --------".format(reg))
                 outpath = os.path.join(args.out, make_safe_filename(reg))
                 if not os.path.isdir(outpath):
                     os.makedirs(outpath)
