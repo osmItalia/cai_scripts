@@ -72,8 +72,7 @@ def main():
     parser_infomont.add_argument('-o', dest='out', required=True,
                                  help="the path to the output directory "
                                  "containing the three output files")
-    parser_infomont.add_argument('-r', dest='regs', required=True,
-                                 action='store_true',
+    parser_infomont.add_argument('-r', dest='regs', action='store_true',
                                  help="create all Italian regions")
     parser_infomont.add_argument('-z', dest='zip', action='store_true',
                                  help="create a zip file of the directory "
