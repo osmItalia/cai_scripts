@@ -251,7 +251,7 @@ def get_points(lines):
                         inters.append(Point(last_coords[0], last_coords[1]))
     return MultiPoint(inters)
 
-def split_at_intersection(lines):
+def split_at_intersection(lines, prefix=None):
     """Split input lines at intersection
 
     :param list lines: a list of dictionary containing geometri in WKT format
@@ -264,9 +264,13 @@ def split_at_intersection(lines):
     for line in lines:
         splitlines = split(shape(line['geometry']), mp)
         for sl in splitlines:
+            if prefix:
+                idd = int(str(prefix) + str(x))
+            else:
+                idd = x
             feats = deepcopy(line['properties'])
-            feats['IDTrat'] = x
-            output.append({'geometry': mapping(sl), 'id': x,
+            feats['IDTrat'] = idd
+            output.append({'geometry': mapping(sl), 'id': idd,
                            'properties': feats})
             x += 1
     return output

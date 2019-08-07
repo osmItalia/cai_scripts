@@ -220,7 +220,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             feat = {'geometry': mapping(geom), 'properties': outags}
             self.gjson.append(feat)
 
-    def create_way_geojson(self):
+    def create_way_geojson(self, prefix=None):
         """Function to create GeoJSON geometries for ways"""
         features = []
         for k, v in self.ways.items():
@@ -283,7 +283,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             feat = {'geometry': mapping(geom), 'properties': outags}
             features.append(feat)
         if self.infomont:
-            features = split_at_intersection(features)
+            features = split_at_intersection(features, prefix)
         self.wjson = features
 
 

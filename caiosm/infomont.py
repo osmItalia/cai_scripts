@@ -13,7 +13,7 @@ class CaiOsmInfomont:
     """Class to convert OSM data into Infomont schema and create shapefile"""
 
     def __init__(self, area=None, bbox=None, bbox_inverted=False,
-                 driver="ESRI Shapefile", epsg=32632, debug=None):
+                 driver="ESRI Shapefile", epsg=32632, prefix=None, debug=None):
         """Inizialize function
         :param str area: the name of the area of interest
         :param str bbox: a string with the bounding box of the area, needed
@@ -21,6 +21,7 @@ class CaiOsmInfomont:
         :param bool bbox_inverted: set True id the bbox format is
                                    XMIN,YMIN,XMAX,YMAX
         :param str driver: the OGR driver to use as output
+        :param str prefix: a prefix to add to ways id
         :param bool debug: print debug information
         """
 
@@ -32,7 +33,7 @@ class CaiOsmInfomont:
         self.cor.get_cairoutehandler(infomont=True)
         if self.debug:
             print("Before create way")
-        self.cor.cch.create_way_geojson()
+        self.cor.cch.create_way_geojson(prefix)
         if self.debug:
             print("Before create route ")
         self.cor.cch.create_routes_geojson()
