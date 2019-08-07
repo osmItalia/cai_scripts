@@ -118,6 +118,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                         or way
         """
         outdict = {}
+        if self.debug:
+            print("In create schema")
         if typ == 'route':
             for v in self.routes.values():
                 if set(outdict.keys()) != set(v['tags'].keys()):
@@ -297,6 +299,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         :param str driv: the OGR driver to use, default is GeoJSON
         :param str enc: the encoding value to use
         """
+        if self.debug:
+            print('Starting writing OGR output')
         if typ == 'route':
             if not self.infomont:
                 self._create_schema('route')
@@ -310,6 +314,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         else:
             raise ValueError("Accepted value for typ option are: 'route',"
                                  " 'way' and 'members'")
+        if self.debug:
+            print(schema)
         if epsg != 4326:
             inepsg = "EPSG:{}".format(epsg)
             project = partial(pyproj.transform, pyproj.Proj(init='EPSG:4326'),
@@ -317,8 +323,12 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         with fiona.open(out, 'w', driver=driv, crs=fiona.crs.from_epsg(epsg),
                         schema=schema, encoding=enc) as f:
             if typ == 'route':
+                if self.debug:
+                    print("In route")
                 if len(self.gjson) == 0:
                     self.create_routes_geojson()
+                if self.debug:
+                    print("Number of route {}".format(len(self.gjson)))
                 for feat in self.gjson:
                     if epsg != 4326:
                         newgeom = transform(project, shape(feat['geometry']))
@@ -331,8 +341,12 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                                 feat['properties'][sc] = ''
                         f.write(feat)
             elif typ == 'way':
+                if self.debug:
+                    print("In way")
                 if len(self.wjson) == 0:
                     self.create_way_geojson()
+                if self.debug:
+                    print("Number of way {}".format(len(self.wjson)))
                 for feat in self.wjson:
                     if epsg != 4326:
                         newgeom = transform(project, shape(feat['geometry']))
@@ -396,6 +410,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
 
         :param str out: the path to the output CSV file
         """
+        if self.debug:
+            print("Before WriteDictToCSV")
         WriteDictToCSV(out, ROUTE_COLUMNS, self.routes)
 
 

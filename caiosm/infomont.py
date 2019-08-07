@@ -83,8 +83,14 @@ class CaiOsmInfomont:
 
         :param str outdir: the path to the directory containing output files
         """
+        if self.debug:
+            print("Writing routes")
         self.write_routes(os.path.join(outdir, 'sent_perc.csv'))
+        if self.debug:
+            print("Writing ways")
         self.write_ways(os.path.join(outdir, 'trt_sent.shp'))
+        if self.debug:
+            print("Writing route members")
         self.write_routes_ways(os.path.join(outdir, 'trt_perc.csv'))
 
     def write_all_geo(self, outdir):
