@@ -62,7 +62,18 @@ def WriteDictToCSV(csv_file, csv_columns, dict_data):
                                     extrasaction='ignore')
             writer.writeheader()
             for k, data in dict_data.items():
-                writer.writerow(data['tags'])
+                allcols = True
+                missing = []
+                for col in csv_columns:
+                    if col not in data['tags'].keys():
+                        allcols = False
+                        missing.append(col)
+                if allcols:
+                    writer.writerow(data['tags'])
+                else:
+                    for mis in missing:
+                        data['tags'][mis] = ''
+                    writer.writerow(data['tags'])
     except IOError as err:
         errno, strerror = err.args
         print("I/O error({0}): {1}".format(errno, strerror))
