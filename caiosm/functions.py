@@ -12,6 +12,7 @@ from subprocess import Popen, PIPE
 import configparser
 import itertools
 import smtplib
+from collections import OrderedDict
 from copy import deepcopy
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -24,11 +25,15 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 from PIL import Image, ImageChops
 
-REGIONI = ["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna",
-           "Friuli Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche",
-           "Molise", "Piemonte", "Puglia", "Sardegna", "Sicilia", "Toscana",
-           "Trentino-Alto Adige/Südtirol", "Umbria", "Veneto",
-           "Valle d'Aosta/Vallée d'Aoste"]
+REGIONI = OrderedDict((("Abruzzo", "08"), ("Basilicata", "04"),
+                      ("Calabria", "03"), ("Campania", "05"),
+                      ("Emilia-Romagna", "13"), ("Friuli Venezia Giulia", "21"),
+                      ("Lazio", "09"), ("Liguria", "14"), ("Lombardia", "17"),
+                      ("Marche", "11"), ("Molise", "07"), ("Piemonte", "16"),
+                      ("Puglia", "06"), ("Sardegna", "01"), ("Sicilia", "02"),
+                      ("Toscana", "12"), ("Trentino-Alto Adige/Südtirol", "19"),
+                      ("Umbria", "10"), ("Veneto", "18"),
+                      ("Valle d'Aosta/Vallée d'Aoste", "15")))
 
 # functions
 def invert_bbox(bbox):

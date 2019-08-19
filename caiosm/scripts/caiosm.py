@@ -16,10 +16,11 @@ from caiosm.infomont import CaiOsmInfomont
 from caiosm.functions import REGIONI
 from caiosm.functions import make_safe_filename
 
-def create_infomont(inarea, inbox, args, out=None):
+def create_infomont(inarea, inbox, args, prefix, out=None):
     if not out:
         out = args.out
-    coi = CaiOsmInfomont(bbox=inbox, area=inarea, debug=args.debug)
+    coi = CaiOsmInfomont(bbox=inbox, area=inarea, debug=args.debug,
+                         prefix=prefix)
     coi.write_all_geo(out)
     if args.zip:
         shutil.make_archive(os.path.split(out)[-1], 'zip', out)
@@ -172,20 +173,20 @@ def main():
             raise ValueError("The directory {} exists, but it is not "
                              "writable".format(args.out))
         if args.regs:
-            for reg in REGIONI:
+            for reg, regid in REGIONI.items():
                 if args.debug:
                     print("-------- Processing : {} --------".format(reg))
                 outpath = os.path.join(args.out, make_safe_filename(reg))
                 if not os.path.isdir(outpath):
                     os.makedirs(outpath)
                 try:
-                    create_infomont(reg, None, args, outpath)
+                    create_infomont(reg, None, args, regid, outpath)
                 except:
                     raise ValueError("Error creating infomont data for region"
                                      " {}".format(reg))
         elif inbox or inarea:
             try:
-                create_infomont(inarea, inbox, args)
+                create_infomont(inarea, inbox, args, regid)
             except:
                 raise ValueError("Error creating infomont data")
 

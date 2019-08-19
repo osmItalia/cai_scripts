@@ -14,7 +14,7 @@ class CaiOsmTable:
     """Print or write to a file statistics for regions, it calculate number
     and lenght routes for each region"""
 
-    def __init__(self, regions=REGIONI):
+    def __init__(self, regions=REGIONI.keys()):
         """Initialize function
 
         :param list regions: a list of region to process, by default it
