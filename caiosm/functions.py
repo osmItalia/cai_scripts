@@ -281,7 +281,7 @@ def split_at_intersection(lines, prefix=None):
         splitlines = split(shape(line['geometry']), mp)
         for sl in splitlines:
             if prefix:
-                idd = int(str(prefix) + str(x))
+                idd = str(prefix) + str(x)
             else:
                 idd = x
             feats = deepcopy(line['properties'])

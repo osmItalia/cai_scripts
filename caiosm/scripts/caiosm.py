@@ -16,7 +16,7 @@ from caiosm.infomont import CaiOsmInfomont
 from caiosm.functions import REGIONI
 from caiosm.functions import make_safe_filename
 
-def create_infomont(inarea, inbox, args, prefix, out=None):
+def create_infomont(inarea, inbox, args, prefix=None, out=None):
     if not out:
         out = args.out
     coi = CaiOsmInfomont(bbox=inbox, area=inarea, debug=args.debug,
@@ -75,6 +75,8 @@ def main():
                                  "containing the three output files")
     parser_infomont.add_argument('-r', dest='regs', action='store_true',
                                  help="create all Italian regions")
+    parser_infomont.add_argument('-p', dest='prefix',
+                                 help="added prefix to the id")
     parser_infomont.add_argument('-z', dest='zip', action='store_true',
                                  help="create a zip file of the directory "
                                  "containing the three output files")
@@ -185,8 +187,11 @@ def main():
                     raise ValueError("Error creating infomont data for region"
                                      " {}".format(reg))
         elif inbox or inarea:
+            prefix = None
+            if args.prefix:
+                prefix = args.prefix
             try:
-                create_infomont(inarea, inbox, args, regid)
+                create_infomont(inarea, inbox, args, prefix)
             except:
                 raise ValueError("Error creating infomont data")
 

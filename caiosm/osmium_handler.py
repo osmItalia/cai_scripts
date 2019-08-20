@@ -70,10 +70,10 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         self.route_schema = {'geometry': 'MultiLineString',}
         self.way_schema = {'geometry': 'LineString',}
         self.memb_schema = {'geometry': 'LineString',
-                            'properties': OrderedDict([('IDPerc', 'int'),
-                                                       ('IDtrat', 'int')])}
+                            'properties': OrderedDict([('IDPerc', 'str'),
+                                                       ('IDtrat', 'str')])}
         if self.infomont:
-            self.route_schema['properties'] = OrderedDict([('IDPerc', 'int'),
+            self.route_schema['properties'] = OrderedDict([('IDPerc', 'str'),
                                                            ('Nume', 'str'),
                                                            ('Denomi', 'str'),
                                                            ('rwn_name', 'str'),
@@ -83,7 +83,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             self.way_schema['properties'] = OrderedDict([('osm_id_way', 'int'),
                                                          ('TIPOLOGIA', 'str'),
                                                          ('CARATTER', 'str'),
-                                                         ('IDTrat', 'int')])
+                                                         ('IDTrat', 'str')])
 
     def way(self, way):
         """Function to parse ways"""
