@@ -270,9 +270,9 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                 else:
                     if highway == 'via_ferrata':
                         outags['CARATTER'] = '00'
-                    if highway in ['path', 'track']:
+                    elif highway in ['path', 'track']:
                         outags['CARATTER'] = '02'
-                    if highway in ASPHALT_WAYS:
+                    elif highway in ASPHALT_WAYS:
                         outags['CARATTER'] = '01'
                     elif highway in OTHERS_WAYS:
                         outags['CARATTER'] = '01'
