@@ -34,10 +34,11 @@ NATURAL_WAYS = ['track']
 OFFROAD_WAYS = ['footway', 'path', 'bridleway']
 # surface classification
 ASPHALT_SURFACE = ['asphalt', 'concrete', 'concrete:plates', 'paved']
-OFFROAD_SURFACE = ['compacted', 'dirt', 'grass', 'gravel', 'ground', 'unpaved']
+OFFROAD_SURFACE = ['compacted', 'dirt', 'grass', 'gravel', 'ground', 'unpaved',
+                   'fine_gravel', 'earth', 'rock', 'mud', 'stone']
 CONCRETE_SURFACE = ['cobblestone', 'cobblestone:flattened', 'paving_stones',
-                    'pebblestone', 'sett', 'grass_paver']
-OTHERS_SURFACE = ['metal', 'wood']
+                    'pebblestone', 'sett', 'grass_paver', 'cement']
+OTHERS_SURFACE = ['metal', 'wood', 'unknown']
 # route fields name {'old': 'new'}
 ROUTE_FIELD = OrderedDict([('IDPerc', 'id'), ('Nume', 'ref'),
                            ('Denomi', 'name'), ('rwn_name', 'rwn:name'),
@@ -270,7 +271,14 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                 else:
                     if highway == 'via_ferrata':
                         outags['CARATTER'] = '00'
-                    elif highway in ['path', 'track']:
+                    elif highway == 'footway':
+                        if 'footway' in v['tags'].keys():
+                            outags['CARATTER'] = '01'
+                        elif 'sidewalk' in v['tags'].keys():
+                            outags['CARATTER'] = '01'
+                        else:
+                            outags['CARATTER'] = '02'
+                    elif highway in ['path', 'track', 'bridleway']:
                         outags['CARATTER'] = '02'
                     elif highway in ASPHALT_WAYS:
                         outags['CARATTER'] = '01'
