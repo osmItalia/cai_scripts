@@ -137,7 +137,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             self.way_schema['properties'] = outdict
 
 
-    def length(self, epsg="EPSG:3035"):
+    def length(self, epsg="EPSG:3035", unit='m'):
          """Function to return the total lenght of routes
 
          :param str epsg: the EPSG code string to use
@@ -159,6 +159,12 @@ class CaiRoutesHandler(osmium.SimpleHandler):
              geomm = transform(project, geom)
              # sum to total
              total += geomm.length
+         if unit == 'km':
+             total = round(round(total) / 1000, 1)
+         elif unit == 'm':
+             total = round(total)
+         else:
+             print("Unit not supported, reported in meters")
          return total
 
 
