@@ -152,20 +152,7 @@ out;"""
                                 time=self.timeout)
 
         data = self._get_data(instr)
-        #import pdb; pdb.set_trace()
-        #mir = osmium.MergeInputReader()
-        #mir.add_buffer(data, "osm")
-        #print("before with")
-        #with tempfile.NamedTemporaryFile(suffix=".osm") as temp_osm:
-        #    os.unlink(temp_osm.name)
-        #    print("before writer")
-        #    wh = osmium.WriteHandler(temp_osm.name)
-        #    mir.apply(wh)
-        #    wh.close()
-        #    print("before read")
-        #    output = temp_osm.read()
-        #pdb.set_trace()
-        #return output
+
         if sort:
             mir = osmium.MergeInputReader()
             mir.add_buffer(data.encode('utf-8'), "osm")
@@ -705,10 +692,11 @@ relation
 
         :param str network: the network level to query, default 'lwn'
         """
-        osm = self.get_data_osm(network=network)
+        if not self.osmdata:
+            self.get_data_osm(network=network)
         import tempfile
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
-            fi.write(osm)
+            fi.write(self.osmdata)
         self.cch = CaiRoutesHandler()
         self.cch.apply_file(fi.name, locations=True)
         os.remove(fi.name)
@@ -722,4 +710,113 @@ relation
         if self.cch is None:
             self.get_cairoutehandler(network)
         self.cch.create_routes_geojson()
+        return self.cch.gjson
+
+
+class CaiOsmRouteDate(CaiOsmBase):
+    """Class to get CAI route diff using Overpass API and convert in different
+       formats"""
+
+    def __init__(self, startdate, area=None,
+                 bbox=None, sourceref=None, separator='|', debug=False,
+                 timeout=2500):
+        """Inizialize
+
+        :param str area: the name of the area of interest
+        :param str bbox: a string with the bounding box of the area, needed
+                         format is YMIN,XMIN,YMAX,XMAX
+        :param bool bbox_inverted: set True id the bbox format is
+                                    XMIN,YMIN,XMAX,YMAX
+        :param str separator: the separator to use for CSV
+        :param bool debug: print debug information
+        :param int timeout: the timeout value for overpass
+        """
+        super(CaiOsmRouteDate, self).__init__(area=area, bbox=bbox,
+                                              timeout=timeout,
+                                              separator=separator, debug=debug)
+
+        header = '[out:xml][date:"{start}"];'.format(start="{}T00:00:00Z".format(startdate))
+        query = header + """{area}
+relation
+  ["route"="hiking"]
+  {netw}
+  ["cai_scale"]
+"""
+        if sourceref:
+            source = '["source:ref"="{code}"]'.format(code=sourceref)
+            self.query = query + source
+        else:
+            self.query = query
+        if area or bbox:
+            self.query += """({bbox})"""
+        self.query += """; (._;>;);out meta;"""
+        self.lenght = None
+
+    def get_data_osm(self, network='lwn', sort=True, remove=True):
+        """Function to return data in the original OSM format
+
+        :param str network: the network level to query, default 'lwn'
+        """
+
+        network = check_network(network)
+        if self.area:
+            instr = self.query.format(area='area["name"="{}"]->.a;'.format(self.area),
+                                      bbox='area.a', netw=network)
+        elif self.bbox:
+            instr = self.query.format(area='', bbox=self.bbox, netw=network)
+        else:
+            instr = self.query.format(area='', bbox='', netw=network)
+
+        data = self._get_data(instr)
+        if sort:
+            mir = osmium.MergeInputReader()
+            mir.add_buffer(data.encode('utf-8'), "osm")
+            # the code stop here after printing the xml osm data
+            tempname = tempfile.mkstemp(suffix='.osm')[1]
+
+            with open(tempname, 'w') as temp_osm:
+                os.unlink(temp_osm.name)
+                wh = osmium.WriteHandler(temp_osm.name)
+                mir.apply(wh, idx="flex_mem")
+                wh.close()
+                temp_osm.close()
+            with open(tempname, 'r') as temp_osm:
+                data = temp_osm.read()
+            if remove:
+                os.remove(tempname)
+        return data
+
+    def get_length(self, network='lwn'):
+        """Function to return the total lenght of data
+
+        :param str network: the network level to query, default 'lwn'
+        """
+        if self.cch is None:
+            if self.cch.count > 0:
+                self.cch.get_cairoutehandler(network)
+                self.lenght = self.cch.length()
+        return self.lenght
+
+    def get_cairoutehandler(self, network='lwn', infomont=False):
+        """Function to download osm data and create CaiRoutesHandler instance
+
+        :param str network: the network level to query, default 'lwn'
+        """
+        data = self.get_data_osm(network=network)
+        self.cch = CaiRoutesHandler(infomont=infomont)
+        # trick to solve the problem that overpass data ar not sorted
+        mir = osmium.MergeInputReader()
+        mir.add_buffer(data.encode('utf-8'), "osm")
+        mir.apply(self.cch, idx="flex_mem", simplify=True)
+        return True
+
+    def get_geojson(self, network='lwn'):
+        """Function to get a GeoJSON object
+
+        :param str network: the network level to query, default 'lwn'
+        """
+        if self.cch is None:
+            self.get_cairoutehandler(network)
+        if len(self.cch.gjson) == 0:
+            self.cch.create_routes_geojson()
         return self.cch.gjson
