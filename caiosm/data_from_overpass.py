@@ -325,7 +325,7 @@ relation
   ({bbox});
 """
 
-    def get_length(self, network='lwn'):
+    def get_length(self, network='lwn', unit='km'):
         """Function to return the total lenght of data
 
         :param str network: the network level to query, default 'lwn'
@@ -334,7 +334,7 @@ relation
             return self.lenght
         if self.cch is None:
             self.cch.get_cairoutehandler(network)
-        self.lenght = self.cch.length()
+        self.lenght = self.cch.length(unit=unit)
         return self.lenght
 
     def get_cairoutehandler(self, network='lwn', infomont=False):
@@ -786,15 +786,18 @@ relation
                 os.remove(tempname)
         return data
 
-    def get_length(self, network='lwn'):
+    def get_length(self, network='lwn', unit='km'):
         """Function to return the total lenght of data
 
         :param str network: the network level to query, default 'lwn'
         """
         if self.cch is None:
+            self.get_cairoutehandler()
             if self.cch.count > 0:
                 self.cch.get_cairoutehandler(network)
-                self.lenght = self.cch.length()
+                self.lenght = self.cch.length(unit=unit)
+            else:
+                self.lenght = 0
         return self.lenght
 
     def get_cairoutehandler(self, network='lwn', infomont=False):
