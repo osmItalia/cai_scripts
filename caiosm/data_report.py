@@ -78,8 +78,8 @@ class CaiOsmHistory:
                              execute for all Italian regions
         """
         self.regions = regions
-        self.startdate = datetime.fromisoformat(startdate)
-        self.enddate = datetime.fromisoformat(enddate)
+        self.startdate = datetime.strptime(startdate, '%Y-%m-%d')
+        self.enddate = datetime.strptime(enddate, '%Y-%m-%d')
         thisdelta = delta(deltatime)
         self.times = [self.startdate]
         time = self.startdate
