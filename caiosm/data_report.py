@@ -106,7 +106,7 @@ class CaiOsmHistory:
             data = y.strftime('%Y-%m-%d')
             cord = CaiOsmRouteDate(startdate=y, area='Italia')
             cord.get_cairoutehandler()
-            output[data] = [cord.cch.count, cord.get_lenght(unit='km')]
+            output[data] = [cord.cch.count, cord.get_length(unit='km')]
         return output
 
     def reg_history(self, region):
@@ -115,5 +115,5 @@ class CaiOsmHistory:
             data = y.strftime('%Y-%m-%d')
             cord = CaiOsmRouteDate(startdate=y, area=region)
             cord.get_cairoutehandler()
-            output[data] = [cord.cch.count, cord.get_lenght(unit='km')]
+            output[data] = [cord.cch.count, cord.get_length(unit='km')]
         return output
