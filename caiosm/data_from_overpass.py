@@ -793,11 +793,11 @@ relation
         """
         if self.cch is None:
             self.get_cairoutehandler()
-            if self.cch.count > 0:
-                self.cch.get_cairoutehandler(network)
-                self.lenght = self.cch.length(unit=unit)
-            else:
-                self.lenght = 0
+        if self.cch.count > 0:
+            self.cch.get_cairoutehandler(network)
+            self.lenght = self.cch.length(unit=unit)
+        else:
+            self.lenght = 0
         return self.lenght
 
     def get_cairoutehandler(self, network='lwn', infomont=False):
