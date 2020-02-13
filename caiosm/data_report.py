@@ -110,7 +110,7 @@ class CaiOsmHistory:
             data = y.strftime('%Y-%m-%d')
             cord = CaiOsmRouteDate(startdate=y, area='Italia')
             cord.get_cairoutehandler()
-            output[data] = [cord.cch.count, cord.length(unit='km')]
+            output[data] = [cord.cch.count, cord.get_length(unit='km')]
             sleep(self.sleep)
         return output
 
