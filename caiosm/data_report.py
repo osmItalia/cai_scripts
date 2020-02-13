@@ -9,7 +9,7 @@ from time import sleep
 from datetime import datetime
 from datetime import timedelta
 import matplotlib.pyplot as plt
-
+import numpy as np
 from caiosm.data_from_overpass import CaiOsmRoute
 from caiosm.data_from_overpass import CaiOsmRouteDate
 from caiosm.functions import REGIONI
@@ -27,6 +27,33 @@ def delta(gran):
         return (int(output), unit)
     else:
         print("Supported delta values are: {}".format(', '.join(SUPPORTED_GRAN)))
+
+def plot_one(data, title, outname=None, dpi=300):
+    xlabels = sorted(list(data.keys()))
+    xs = np.arange(0, len(xlabels))
+    nums = []
+    counts = []
+    for x in xlabels:
+        nums.append(data[x][0])
+        counts.append(data[x][1])
+    fig, ax1 = plt.subplots()
+    ax1col = 'green'
+    ax1.set_xlabel('Data')
+    ax1.set_ylabel('Numero sentieri', color=ax1col)
+    ax1.bar(xs, nums, color=ax1col)
+    ax2 = ax1.twinx()
+    ax2col = 'red'
+    ax2.set_ylabel('Chilometri', color=ax2col)
+    ax2.plot(xs, counts, color=ax2col)
+    ax1.set_title(title)
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.show()
+    if outname:
+        plt.savefig(outname, dpi=dpi)
+        plt.close()
+    else:
+        plt.show()
+    return True
 
 class CaiOsmTable:
     """Print or write to a file statistics for regions, it calculate number
@@ -105,6 +132,7 @@ class CaiOsmHistory:
         self.sleep = sleep
 
     def italy_history(self):
+        """Return data about the history of CAI path at Italian level"""
         output = {}
         for y in self.times:
             data = y.strftime('%Y-%m-%d')
@@ -114,7 +142,20 @@ class CaiOsmHistory:
             sleep(self.sleep)
         return output
 
+    def plot_italy(self, outpath):
+        """Plot data about the history of CAI path at Italian
+
+        :param str outpath: the path to the region
+        """
+        data = self.italy_history()
+        plot_one(data, 'Andamento sentieri CAI in Italia', outpath)
+        return True
+
     def reg_history(self, region):
+        """Return data about the history of CAI path for a region
+
+        :param str region: the name of the region
+        """
         output = {}
         for y in self.times:
             data = y.strftime('%Y-%m-%d')
@@ -124,7 +165,18 @@ class CaiOsmHistory:
             sleep(self.sleep)
         return output
 
+    def plot_region(self, region, outpath):
+        """Plot data about the history of CAI path for a region
+
+        :param str region: the name of the region
+        :param str outpath: the path to the region
+        """
+        data = self.reg_history(region)
+        plot_one(data, 'Andamento sentieri CAI in {}'.format(region), outpath)
+        return True
+
     def regions_history(self):
+        """Return data about the history of CAI path for all Italian regions"""
         output = {}
         for re in self.regions:
             output[re] = self.reg_history(re)
