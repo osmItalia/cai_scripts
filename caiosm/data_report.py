@@ -68,7 +68,8 @@ class CaiOsmTable:
 
 class CaiOsmHistory:
     """Return data about the history of data"""
-    def __init__(self, startdate, enddate, deltatime, regions=REGIONI.keys()):
+    def __init__(self, startdate, enddate, deltatime, regions=REGIONI.keys(),
+                 sleep=60):
         """Initialize function
         :param str startdate: the starting date in format YYYY-MM-DD
         :param str enddate: a ending date in format YYYY-MM-DD
@@ -99,6 +100,7 @@ class CaiOsmHistory:
                 newyear = time.year + thisdelta[0]
                 time = time.replace(year=newyear)
             self.times.append(time)
+        self.sleep = sleep
 
     def italy_history(self):
         output = {}
@@ -107,7 +109,7 @@ class CaiOsmHistory:
             cord = CaiOsmRouteDate(startdate=y, area='Italia')
             cord.get_cairoutehandler()
             output[data] = [cord.cch.count, cord.get_length(unit='km')]
-            sleep(30)
+            sleep(self.sleep)
         return output
 
     def reg_history(self, region):
@@ -117,5 +119,5 @@ class CaiOsmHistory:
             cord = CaiOsmRouteDate(startdate=y, area=region)
             cord.get_cairoutehandler()
             output[data] = [cord.cch.count, cord.get_length(unit='km')]
-            sleep(30)
+            sleep(self.sleep)
         return output
