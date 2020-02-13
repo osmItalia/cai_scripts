@@ -8,6 +8,8 @@ Created on Wed Mar 27 11:49:25 2019
 from time import sleep
 from datetime import datetime
 from datetime import timedelta
+import matplotlib.pyplot as plt
+
 from caiosm.data_from_overpass import CaiOsmRoute
 from caiosm.data_from_overpass import CaiOsmRouteDate
 from caiosm.functions import REGIONI
@@ -108,7 +110,7 @@ class CaiOsmHistory:
             data = y.strftime('%Y-%m-%d')
             cord = CaiOsmRouteDate(startdate=y, area='Italia')
             cord.get_cairoutehandler()
-            output[data] = [cord.cch.count, cord.get_length(unit='km')]
+            output[data] = [cord.cch.count, cord.length(unit='km')]
             sleep(self.sleep)
         return output
 
@@ -119,5 +121,12 @@ class CaiOsmHistory:
             cord = CaiOsmRouteDate(startdate=y, area=region)
             cord.get_cairoutehandler()
             output[data] = [cord.cch.count, cord.get_length(unit='km')]
+            sleep(self.sleep)
+        return output
+
+    def regions_history(self):
+        output = {}
+        for re in self.regions:
+            output[re] = self.reg_history(re)
             sleep(self.sleep)
         return output
