@@ -142,10 +142,11 @@ class CaiOsmHistory:
             sleep(self.sleep)
         return output
 
-    def plot_italy(self, outpath):
+    def plot_italy(self, outpath=None):
         """Plot data about the history of CAI path at Italian
 
-        :param str outpath: the path to the region
+        :param str outpath: the path to the output Italy plot file, by default it
+                            show the graph in the monitor
         """
         data = self.italy_history()
         plot_one(data, 'Andamento sentieri CAI in Italia', outpath)
@@ -165,11 +166,12 @@ class CaiOsmHistory:
             sleep(self.sleep)
         return output
 
-    def plot_region(self, region, outpath):
+    def plot_region(self, region, outpath=None):
         """Plot data about the history of CAI path for a region
 
         :param str region: the name of the region
-        :param str outpath: the path to the region
+        :param str outpath: the path to the output region plot file, by default
+                            it show the graph in the monitor
         """
         data = self.reg_history(region)
         plot_one(data, 'Andamento sentieri CAI in {}'.format(region), outpath)
@@ -182,3 +184,27 @@ class CaiOsmHistory:
             output[re] = self.reg_history(re)
             sleep(self.sleep)
         return output
+
+    def regions_csv(self, outpath=None):
+        """Return region's data in csv format
+
+        :param str region: the name of the region
+        :param str outpath: the path to the output regions csv file, by default
+                            it print the date
+        """
+        output = ""
+        for t in self.times:
+            output += "|{}".format(t.strftime('%Y-%m-%d'))
+        for re in self.regions:
+            output+= "{}".format(re)
+            regdata = self.reg_history(re)
+            for t in self.times:
+                output += "|{}".format(regdata[t][1])
+            outpath += "\n"
+        if outpath:
+            fi = open(outpath, 'w')
+            fi.write(output)
+            fi.close()
+        else:
+            print(output)
+        return True
