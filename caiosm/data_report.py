@@ -192,7 +192,7 @@ class CaiOsmHistory:
             output+= "{}".format(re)
             regdata = self.reg_history(re)
             for t in self.times:
-                output += "|{}".format(regdata[t][1])
+                output += "|{}".format(regdata[t.strftime('%Y-%m-%d')][1])
             outpath += "\n"
         if outpath:
             fi = open(outpath, 'w')
