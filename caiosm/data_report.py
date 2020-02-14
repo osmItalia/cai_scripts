@@ -131,27 +131,6 @@ class CaiOsmHistory:
             self.times.append(time)
         self.sleep = sleep
 
-    def italy_history(self):
-        """Return data about the history of CAI path at Italian level"""
-        output = {}
-        for y in self.times:
-            data = y.strftime('%Y-%m-%d')
-            cord = CaiOsmRouteDate(startdate=y, area='Italia')
-            cord.get_cairoutehandler()
-            output[data] = [cord.cch.count, cord.get_length(unit='km')]
-            sleep(self.sleep)
-        return output
-
-    def plot_italy(self, outpath=None):
-        """Plot data about the history of CAI path at Italian
-
-        :param str outpath: the path to the output Italy plot file, by default it
-                            show the graph in the monitor
-        """
-        data = self.italy_history()
-        plot_one(data, 'Andamento sentieri CAI in Italia', outpath)
-        return True
-
     def reg_history(self, region):
         """Return data about the history of CAI path for a region
 
@@ -165,6 +144,20 @@ class CaiOsmHistory:
             output[data] = [cord.cch.count, cord.get_length(unit='km')]
             sleep(self.sleep)
         return output
+
+    def italy_history(self):
+        """Return data about the history of CAI path at Italian level"""
+        return self.reg_history('Italia')
+
+    def plot_italy(self, outpath=None):
+        """Plot data about the history of CAI path at Italian
+
+        :param str outpath: the path to the output Italy plot file, by default it
+                            show the graph in the monitor
+        """
+        data = self.italy_history()
+        plot_one(data, 'Andamento sentieri CAI in Italia', outpath)
+        return True
 
     def plot_region(self, region, outpath=None):
         """Plot data about the history of CAI path for a region
