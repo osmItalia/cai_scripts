@@ -188,6 +188,7 @@ class CaiOsmHistory:
         output = ""
         for t in self.times:
             output += "|{}".format(t.strftime('%Y-%m-%d'))
+        output += "\n"
         for re in self.regions:
             output+= "{}".format(re)
             regdata = self.reg_history(re)
