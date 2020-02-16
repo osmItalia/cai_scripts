@@ -18,6 +18,9 @@ SINGULAR_GRAN = ["day", "month", "year"]
 PLURAL_GRAN = ["days", "months", "years"]
 SUPPORTED_GRAN = SINGULAR_GRAN + PLURAL_GRAN
 
+BIGFONT = {'fontname': 'Arial', 'size': '24', 'weight': 'bold'}
+NORMALFONT = {'fontname': 'Arial', 'size': '20'}
+
 def delta(gran):
     """Return the value """
     output, unit = gran.split(" ")
@@ -38,14 +41,16 @@ def plot_one(data, title, outname=None, dpi=300):
         counts.append(data[x][1])
     fig, ax1 = plt.subplots()
     ax1col = 'green'
-    ax1.set_xlabel('Data')
-    ax1.set_ylabel('Numero sentieri', color=ax1col)
+    ax1.set_xticks(range(len(xlabels)))
+    ax1.set_xticklabels(xlabels)
     ax1.bar(xs, nums, color=ax1col)
     ax2 = ax1.twinx()
     ax2col = 'red'
-    ax2.set_ylabel('Chilometri', color=ax2col)
+    ax2.set_ylabel('Chilometri',  **NORMALFONT, color=ax2col)
     ax2.plot(xs, counts, color=ax2col)
-    ax1.set_title(title)
+    ax1.set_xlabel('Data', **NORMALFONT)
+    ax1.set_ylabel('Numero sentieri',  **NORMALFONT, color=ax1col)
+    ax1.set_title(title, **BIGFONT)
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.show()
     if outname:
