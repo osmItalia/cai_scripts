@@ -20,6 +20,7 @@ SUPPORTED_GRAN = SINGULAR_GRAN + PLURAL_GRAN
 
 BIGFONT = {'fontname': 'Arial', 'size': '24', 'weight': 'bold'}
 NORMALFONT = {'fontname': 'Arial', 'size': '20'}
+SMALLFONT = {'fontname': 'Arial', 'size': '16'}
 
 def delta(gran):
     """Return the value """
@@ -44,12 +45,15 @@ def plot_one(data, title, outname=None, dpi=300):
     ax1.set_xticks(range(len(xlabels)))
     ax1.set_xticklabels(xlabels)
     ax1.bar(xs, nums, color=ax1col)
+    ax1.tick_params(axis='y', colors=ax1col, labelsize=NORMALFONT['size'])
+    ax1.tick_params(axis='x', labelsize=SMALLFONT['size'])
     ax2 = ax1.twinx()
     ax2col = 'red'
-    ax2.set_ylabel('Chilometri',  **NORMALFONT, color=ax2col)
+    ax2.set_ylabel('Chilometri', labelpad=40,  **NORMALFONT, color=ax2col)
     ax2.plot(xs, counts, color=ax2col)
-    ax1.set_xlabel('Data', **NORMALFONT)
-    ax1.set_ylabel('Numero sentieri',  **NORMALFONT, color=ax1col)
+    ax2.tick_params(axis='y', colors=ax2col, labelsize=NORMALFONT['size'])
+    ax1.set_xlabel('Data', labelpad=40, **NORMALFONT)
+    ax1.set_ylabel('Numero sentieri', labelpad=40,  **NORMALFONT, color=ax1col)
     ax1.set_title(title, **BIGFONT)
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.show()
