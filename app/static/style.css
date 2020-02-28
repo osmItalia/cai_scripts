@@ -2,13 +2,49 @@ h1, h2, footer {
   text-align: center;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  color: #848484;
+  text-shadow: -1px 0 #e74c3c, 0 1px #e74c3c, 1px 0 #e74c3c, 0 -1px #e74c3c;
+}
+
 footer {
   margin-top: 10px;
-  background-color: rgba(255, 0, 0, 0.8);
+  background-color: #e74c3c;
+}
+
+a {
+  color: black;
+  text-decoration: none;
+}
+a:hover {
+  color: #e74c3c;
+}
+
+footer {
+  min-height: 5vh;
+}
+
+.vertmid {
+  padding-top: 1rem;
+}
+
+footer a:hover {
+  color: grey;
 }
 
 #map {
-  height: 450px;
+  height: 90vh;
+}
+
+.sectioname {
+  padding: 0.2rem;
+}
+
+.tag {
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-family: 'Source Code Pro';
+  font-weight: 300;
 }
 
 .center {
@@ -33,4 +69,79 @@ footer {
 	height: 100%;
 	z-index: 9999;
 	background: url(./loader.gif) center no-repeat #fff;
+}
+
+/* navbar */
+#menu-nav {
+  max-width: 1000px;
+  margin: 5px auto;
+  background-color: #ecf0f1;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+ 
+#navigation-bar ul {
+  border-radius: 4px;
+  overflow: hidden;
+}
+#navigation-bar li {
+  float: left;
+  width: 20%;
+  list-style: none;
+}
+#navigation-bar li ul{
+  display: none;
+}
+#navigation-bar li:hover ul 
+{
+  display: block;
+  position: absolute;
+  background-color: #ecf0f1;
+  z-index: 1000;
+  height: 50vh;
+  overflow: auto;
+}
+
+#navigation-bar li:hover li
+{
+  float: none;
+  margin-top: 10px;
+}
+
+#navigation-bar li:hover a::before {
+  right: 0;
+  left: 0;
+}
+
+#navigation-bar a {
+  color: #848484;
+  font-size: 20px;
+  text-decoration: none;
+  text-align: center;
+  padding: 20px 0;
+  display: block;
+  position: relative;
+  transition: all 0.3s ease;
+}
+#navigation-bar a:hover {
+  color: #e74c3c;
+}
+#navigation-bar a::before {
+  content: "";
+  transition: all 0.4s ease-in-out;
+  position: absolute;
+  right: 50%;
+  left: 50%;
+  bottom: 0;
+  height: 2px;
+  background-color: #e74c3c;
+}
+#navigation-bar a:hover::before {
+  right: 0;
+  left: 0;
+}
+
+#navigation-bar li:hover ul a {
+  padding: 5px;
+  font-size: 10px;
 }

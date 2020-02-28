@@ -3,40 +3,78 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="website to see the CAI data in OpenStreetMap">
     <meta name="author" content="Luca Delucchi" >
     <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='ol.css') }}">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css">
+    <link rel="stylesheet" href="//brick.freetls.fastly.net/sourcecodepro:300,400,500,900/Open+Sans:400,700">
     {% block head %}{% endblock %}
   </head>
   <body>
-	 <nav>
-	   <h1>Portale dei sentieri CAI in OpenStreetMap</h1>
-	   {% block subtitle %}{% endblock %}
-	 </nav>
-	 <section class="content">
-	   {% block content %}
-	   <div id="map" class="center">
+	  <nav>
+	    <div id="menu-nav">
+      <div id="navigation-bar">
+        <ul>
+          <li><a href="/"><i class="fa fa-home"></i> <span>Home</span></a></li>
+          <li>
+            <a href="#"><i class="fas fa-map-signs"></i> <span>Regions</span></a>
+            <ul id="navregions"></ul>
+          </li>
+          <li><a href="#"><i class="fa fa-user"></i> <span>About</span></a></li>
+          <li><a href="#"><i class="fa fa-book"></i> <span>Contact</span></a></li>
+          <li><a href="https://github.com/osmItalia/cai_scripts" target="_blank"><i class="fab fa-github-square"></i> <span>Source code</span></a></li>
+        </ul>
+      </div>
+      </div>
+	  </nav>
+	  <h1>Portale dei sentieri CAI in OpenStreetMap</h1>
+	  {% block subtitle %}{% endblock %}
+	  <section class="content">
+	    {% block content %}
+	    <div id="map" class="center">
 	       <!-- <div class="se-pre-con"></div> -->
-	   </div>
-	   <div id="list">
-      {% block routes %}
-      {% endblock %}
-	   </div>
-	   {% endblock %}
-	 </section>
-	 <footer>
-	   <a href="/" >Home</a> <br>
-		<small>
-	       Sito realizzato da Luca Delucchi della Fondazione Edmund Mach
-	   </small>
-	 </footer>
-	 <script src="{{ url_for('static', filename='jquery-3.3.1.min.js') }}"></script>
+	    </div>
+	    <div id="list">
+        {% block routes %}
+        {% endblock %}
+	    </div>
+	    {% endblock %}
+	  </section>
+	  <footer>
+	    <div class="row vertmid">
+	      <div class="col-4 col-sm-4">
+          <small>
+    	      Sito realizzato da Luca Delucchi della Fondazione Edmund Mach
+    	    </small>	      
+	      </div>
+	      <div class="col-4 col-sm-4"></div>
+	      <div class="col-4 col-sm-4">
+          <small>
+    	      Dati forniti da © <a href="© OpenStreetMap contributors" target="_blank">OpenStreetMap contributors</a>,
+    	      rilasciati con licenza <a href="https://opendatacommons.org/licenses/odbl/index.html" target="_blank">Open Database License</a>
+    	    </small>	     
+	      </div>
+	    </div>
+	  </footer>
+	  <script src="{{ url_for('static', filename='jquery-3.3.1.min.js') }}"></script>
+	  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='mobile-detect.min.js') }}"></script>
     <script src="{{ url_for('static', filename='ol.js') }}"></script>
     <script src="{{ url_for('static', filename='functions.js') }}"></script>
+    <script>
+    $(document).ready(function() {
+	    $.ajaxSetup ({
+		   // Disable caching of AJAX responses
+		   cache: false
+	    });
+	    home_regions_nav();	
+	 });
+   </script>
     {% block jsscript %}{% endblock %}
     
   </body>
