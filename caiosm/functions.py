@@ -273,11 +273,11 @@ def split_at_intersection(lines, prefix=None):
     :param list lines: a list of dictionary containing geometri in WKT format
     """
     # get intersection point
-    mp = get_points(lines)
+    mp = get_points(lines["features"])
     x = 0
-    output = []
+    output = geojson.FeatureCollection()
     # for each line split it
-    for line in lines:
+    for line in lines["features"]:
         splitlines = split(shape(line['geometry']), mp)
         for sl in splitlines:
             if prefix:
@@ -286,8 +286,8 @@ def split_at_intersection(lines, prefix=None):
                 idd = x
             feats = deepcopy(line['properties'])
             feats['IDTrat'] = idd
-            output.append({'geometry': mapping(sl), 'id': idd,
-                           'properties': feats})
+            output.append(geojson.Feature(geometry=mapping(sl), id=idd,
+                                          properties=feats))
             x += 1
     return output
 
