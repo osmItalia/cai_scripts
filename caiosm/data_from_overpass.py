@@ -357,7 +357,7 @@ relation
         """
         if self.cch is None:
             self.get_cairoutehandler(network)
-        if len(self.cch.gjson) == 0:
+        if not self.cch.gjson:
             self.cch.create_routes_geojson()
         return self.cch.gjson
 
@@ -819,6 +819,6 @@ relation
         """
         if self.cch is None:
             self.get_cairoutehandler(network)
-        if len(self.cch.gjson) == 0:
+        if not self.cch.gjson:
             self.cch.create_routes_geojson()
         return self.cch.gjson

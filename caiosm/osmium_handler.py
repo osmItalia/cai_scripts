@@ -8,6 +8,7 @@ Created on Sun Mar  3 08:51:30 2019
 
 import osmium
 import copy
+import geojson
 from collections import OrderedDict
 import shapely.wkt as wktlib
 from shapely.geometry import MultiLineString
@@ -65,8 +66,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         self.routes = {}
         self.ways = {}
         self.members = {}
-        self.gjson = []
-        self.wjson = []
+        self.gjson = None
+        self.wjson = None
         self.sep = separator
         self.route_schema = {'geometry': 'MultiLineString',}
         self.way_schema = {'geometry': 'LineString',}
@@ -170,6 +171,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
 
     def create_routes_geojson(self):
         """Function to create GeoJSON geometries for routes"""
+        feats = []
         for k, v in self.routes.items():
             lines = []
             for w in v['elems']:
@@ -226,8 +228,9 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                     outags['segni'] = '001'
             else:
                  outags = tags
-            feat = {'geometry': mapping(geom), 'properties': outags}
-            self.gjson.append(feat)
+            feats.append(geojson.Feature(geometry=mapping(geom),
+                                         properties=outags))
+            self.gjson = geojson.FeatureCollection(feats)
 
     def create_way_geojson(self, prefix=None):
         """Function to create GeoJSON geometries for ways"""
@@ -296,11 +299,11 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             else:
                 outags = v['tags']
 
-            feat = {'geometry': mapping(geom), 'properties': outags}
+            feat = geojson.Feature(geometry=mapping(geom), properties=outags)
             features.append(feat)
         if self.infomont:
             features = split_at_intersection(features, prefix)
-        self.wjson = features
+        self.wjson = geojson.FeatureCollection(features)
 
 
     def write_geojson(self, out, typ='route', driv="GeoJSON", enc='utf-8',
