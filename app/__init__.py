@@ -8,6 +8,7 @@ Created on Mon Apr 22 16:28:42 2019
 
 import os
 import time
+from datetime import datetime
 from flask import Flask
 from flask import render_template
 from flask import jsonify
@@ -22,6 +23,7 @@ from caiosm.functions import get_regions_from_geojson
 DIRFILE = os.path.dirname(os.path.realpath(__file__))
 
 def get_data():
+    print("Get data {}".format(datetime.now()))
     inpath = os.path.join(DIRFILE, 'static')
     regions = get_regions_from_geojson(os.path.join(inpath, 'data',
                                                     'italy.geojson'))
@@ -31,13 +33,14 @@ def get_data():
         cod.get_cairoutehandler()
         cod.write(os.path.join(inpath, 'regions', "{}.geojson".format(regslug)),
                   'geojson')
-        time.sleet(120)
+        time.sleep(120)
         cod.write(os.path.join(inpath, 'regions', "{}.json".format(regslug)),
                                'tags')
         time.sleep(480)
     return True
 
 def get_sezioni():
+    print("Get sezioni {}".format(datetime.now()))
     cosr = CaiOsmSourceRef()
     cosr.write(os.path.join(DIRFILE, 'static', 'data', 'cai_osm.csv'),
                'names')
@@ -65,17 +68,17 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    #sched = BackgroundScheduler(daemon=True)
-    #sched.add_job(get_data, CronTrigger.from_crontab('30 12 * * *'))
-    #sched.add_job(get_sezioni, CronTrigger.from_crontab('30 11 * * *'))
-    #sched.start()
+    sched = BackgroundScheduler(daemon=True)
+    sched.add_job(get_data, CronTrigger.from_crontab('15 0,12 * * *'))
+    sched.add_job(get_sezioni, CronTrigger.from_crontab('15 0,12 * * *'))
+    sched.start()
 
     # a simple page that says hello
     @app.route('/')
     def home():
         """Return the home page"""
         return render_template('home.html')
-    
+
     @app.route('/regione/<region>')
     def regione(region):
         """Return the info for a single region"""
@@ -90,7 +93,7 @@ def create_app(test_config=None):
         """Return the info for a single sezione"""
         corsr = CaiOsmRouteSourceRef(group)
         return jsonify(corsr.get_tags_json())
-    
+
     @app.route('/sezionegeojson/<group>')
     def sezionegeojson(group):
         """Return the info for a single sezione"""
