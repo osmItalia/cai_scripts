@@ -97,7 +97,7 @@ function highlightStyleFunction(feature, resolution) {
         styleCache[type] = [new ol.style.Style({
 		     stroke: new ol.style.Stroke({
 	          color: '#000',
-	          width: 1
+	          width: 4
 	        }),
 	        text: new ol.style.Text({
 	          font: '12px Calibri,sans-serif',
@@ -106,7 +106,7 @@ function highlightStyleFunction(feature, resolution) {
 	          }),
 	          stroke: new ol.style.Stroke({
 	            color: '#fff',
-	            width: 3
+	            width: 6
 	          })
 	        })
 	     })]
@@ -114,7 +114,7 @@ function highlightStyleFunction(feature, resolution) {
 	     styleCache[type] = [new ol.style.Style({
 		     stroke: new ol.style.Stroke({
 	          color: '#000',
-	          width: 1,
+	          width: 4,
 	          lineDash: cai_scale[type]
 	        }),
 	        text: new ol.style.Text({
@@ -124,7 +124,7 @@ function highlightStyleFunction(feature, resolution) {
 	          }),
 	          stroke: new ol.style.Stroke({
 	            color: '#fff',
-	            width: 3
+	            width: 6
 	          })
 	        })
 	     })]
@@ -243,21 +243,21 @@ function home_table(){
         success: function(data) {
         	 var allTextLines = data.split(/\r\n|\n/);
         	 var line = allTextLines[0].split('|');
-        	 var atext = '<tr><td><a href="/sezioneroute/' + line[0] + '">' + line[1] + '</a></td>';
+        	 var atext = '<div class="row"><div class="col-lg-3 col-sm-6 sectioname"><a href="/sezioneroute/' + line[0] + '">' + line[1] + '</a></div>';
         	 for (var i=1; i<allTextLines.length; i++) {
         	 	line = allTextLines[i].split('|');
         	 	if (line.length == 1){
         	 	   continue;
         	 	}
         	 	if (i == allTextLines.length - 1){
-					atext = atext + '<td><a href="/sezioneroute/' + line[0] + '">' + line[1] + '</a></td></tr>';
+    				   atext = atext + '<div class="col-lg-3 col-sm-6 sectioname"><a href="/sezioneroute/' + line[0] + '">' + line[1] + '</a></div></div>';
         	 	} else if ( (i % 4) == 0 ) {
-        	 	   atext = atext + '</tr><tr><td><a href="/sezioneroute/' + line[0] + '">' + line[1] + '</a></td>';
+        	 	   atext = atext + '</div><div class="row"><div class="col-lg-3 col-sm-6 sectioname"><a href="/sezioneroute/' + line[0] + '">' + line[1] + '</a></div>';
         	 	} else {
-        	 	   atext = atext + '<td><a href="/sezioneroute/' + line[0] + '">' + line[1] + '</a></td>';
+        	 	   atext = atext + '<div class="col-lg-3 col-sm-6 sectioname"><a href="/sezioneroute/' + line[0] + '">' + line[1] + '</a></div>';
         	 	}
         	 }
-        	 $( "#osmtable" ).append(atext);
+        	 $( "#sezioni" ).append(atext);
          } 
      });
 }
@@ -317,6 +317,7 @@ function find_route(value){
 function region_table(region){
 	 $.fn.dataTable.ext.errMode = 'none';
 	 table = $('#osmtable').DataTable({
+	      scrollY: '90vh',
         "ajax": {
         	    url: '/static/regions/'+region+'.json',
         	    dataSrc: ''
@@ -387,13 +388,18 @@ function sezione_map(region) {
 	     }
 	 });
 	 map.on('click', function(evt) {
-        var feature = map.forEachFeatureAtPixel(evt.pixel,
-            function(feature) {
+       var feature = map.forEachFeatureAtPixel(evt.pixel,
+           function(feature) {
 		          return feature;
 	         }
 	     );
-	     feature.setStyle(highlightStyleFunction);
-	     table.columns(0).search(feature.get('id')).draw();
+	     if (feature) {
+	       console.log(feature.get('state'));
+	       feature.set('state', 'selected');
+         routes.setStyle(highlightStyleFunction);
+         console.log(feature.get('state'));
+  	     table.columns(0).search(feature.get('id')).draw();
+  	   }
 	 })
 }
 
@@ -435,6 +441,25 @@ function sezione_table(region){
 		      var ext = route.getGeometry().getExtent(); 
 		      map.getView().fit(ext, map.getSize());
 		  }
+    })
+}
+
+function home_regions_nav(){
+    $.ajax({
+        type: "GET",
+        url: "/static/data/italy.geojson",
+        dataType: "json",
+        success: function(data) {
+            var regions = [];
+            for (var i=0; i<data['features'].length; i++) {
+              regions.push(data['features'][i]['properties']['Name']);
+            }
+            regions.sort()
+            for (var i=0; i<regions.length; i++) {
+              regname = regions[i];
+              $('#navregions').append('<a href="/regione/' + regname.toLowerCase() + '"><li>' + regname + '</li></a>');
+            }
+        }
     })
 }
 

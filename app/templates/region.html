@@ -7,24 +7,26 @@
 {% block subtitle %}<h2>Regione {{ name|upper }}</h2>{% endblock %}
 
 {% block routes %}
-    <table id="osmtable" class="display" style="width:100%">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Nome</th>
-                <th>Codice</th>
-                <th>Classificazione CAI</th>
-                <th>From</th>
-                <th>To</th>
-                <th>Distance</th>
-                <th>Symbol</th>
-                <th>Tool</th>
-            </tr>
-        </thead>
-    </table>
+    <div class="tablesez">
+      <table id="osmtable" class="display" style="width:100%">
+          <thead>
+              <tr>
+                  <th>Id</th>
+                  <th>Nome</th>
+                  <th>Codice</th>
+                  <th>Classificazione CAI</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Distance</th>
+                  <th>Symbol</th>
+                  <th>Tool</th>
+              </tr>
+          </thead>
+      </table>  
+    </div>
     <input type="button" value="Clear results" onclick="clearFilter()"/>
     <h2>Sezioni della regione</h2>
-    <table id="sezioni" class="display">
+    <div id="sezioni" class="container center">
     {% for section in codes %}
     	{% if section.id in exists %}
     	{% set codetext = '<a href="/sezioneroute/'+ section.id +'">'+ section.name +	'</a>' %}
@@ -32,17 +34,17 @@
     	{% set codetext = section.name %}
     	{% endif %}
 	   {% if loop.first %}
-	   <tr><td>{{ codetext|safe }}</td>
+	   <div class="row"><div class="col-lg-3 col-sm-6 sectioname">{{ codetext|safe }}</div>
 	   {% elif loop.last %}
-	   <td>{{ codetext|safe }}</td></tr>
+	   <div class="col-lg-3 col-sm-6 sectioname">{{ codetext|safe }}</div></div>
 	   {% elif (loop.index0 % 4) == 0 %}
-	   </tr><tr><td>{{ codetext|safe }}</td>
+	   </div><div class="row"><div class="col-lg-3 col-sm-6 sectioname">{{ codetext|safe }}</div>
 	   {% else %}
-	   <td>{{ codetext|safe }}</td>
+	   <div class="col-lg-3 col-sm-6 sectioname">{{ codetext|safe }}</div>
 	   {% endif %}
     {% endfor %}
     
-    </table>
+    </div>
 {% endblock %}
 {% block jsscript %}
   <script src="{{ url_for('static', filename='jquery.dataTables.min.js') }}"></script>

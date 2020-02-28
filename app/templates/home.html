@@ -2,9 +2,15 @@
 
 {% block routes %}	
 <h2>Sezioni e sottosezioni CAI presenti su OpenStreetMap</h2>
-    <table id="osmtable" class="display center" style="width:100%">
+    <div id="sezioni" class="container center">
        
-    </table>
+    </div>
+    <div class="center">
+      <small>
+        Per mostrare la propria sezione nell'elenco bisogna aggiungere il tag <span class="tag">source:ref</span>
+        usando come valori il codice utilizzato all'interno del CAI e visionabili 
+      </small>
+    </div>
 {% endblock %}
 
 {% block jsscript %}
