@@ -1,15 +1,21 @@
-h1, h2, footer {
+:root{
+  --redcolor: #e74c3c;
+  --greycolor: #848484;
+  --darkgrey: #535353
+}
+
+h1, h2, h3, footer {
   text-align: center;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: #848484;
-  text-shadow: -1px 0 #e74c3c, 0 1px #e74c3c, 1px 0 #e74c3c, 0 -1px #e74c3c;
+  color: var(--greycolor);
+  text-shadow: -1px 0 var(--redcolor), 0 1px var(--redcolor), 1px 0 var(--redcolor), 0 -1px var(--redcolor);
 }
 
 footer {
   margin-top: 10px;
-  background-color: #e74c3c;
+  background-color: var(--redcolor);
 }
 
 a {
@@ -17,7 +23,7 @@ a {
   text-decoration: none;
 }
 a:hover {
-  color: #e74c3c;
+  color: var(--redcolor);
 }
 
 footer {
@@ -114,7 +120,7 @@ footer a:hover {
 }
 
 #navigation-bar a {
-  color: #848484;
+  color: var(--greycolor);
   font-size: 20px;
   text-decoration: none;
   text-align: center;
@@ -124,7 +130,7 @@ footer a:hover {
   transition: all 0.3s ease;
 }
 #navigation-bar a:hover {
-  color: #e74c3c;
+  color: var(--redcolor);
 }
 #navigation-bar a::before {
   content: "";
@@ -134,7 +140,7 @@ footer a:hover {
   left: 50%;
   bottom: 0;
   height: 2px;
-  background-color: #e74c3c;
+  background-color: var(--redcolor);
 }
 #navigation-bar a:hover::before {
   right: 0;
@@ -144,4 +150,28 @@ footer a:hover {
 #navigation-bar li:hover ul a {
   padding: 5px;
   font-size: 10px;
+}
+
+.fullpage {
+  height: 95vh;
+}
+
+.btn-primary {
+  background-color: var(--greycolor);
+  border-color: var(--greycolor);
+  margin: 5px;
+}
+
+.btn-primary:hover {
+  background-color: var(--darkgrey);
+  border-color: var(--darkgrey);
+}
+
+#downbutton{
+  position: relative;
+  display: inline-block;
+  top: -85vh;
+  right: -35vw;
+  padding: 10px;
+  background-color: rgba(255,255,255, 0.6);
 }
