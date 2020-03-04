@@ -69,8 +69,8 @@ def create_app(test_config=None):
         pass
 
     sched = BackgroundScheduler(daemon=True)
-    sched.add_job(get_data, CronTrigger.from_crontab('15 0,12 * * *'))
-    sched.add_job(get_sezioni, CronTrigger.from_crontab('15 0,12 * * *'))
+    sched.add_job(get_sezioni, CronTrigger.from_crontab('0 0 * * *'))
+    sched.add_job(get_data, CronTrigger.from_crontab('30 0 * * *'))
     sched.start()
 
     # a simple page that says hello
