@@ -111,4 +111,10 @@ def create_app(test_config=None):
                 break
         return render_template('sezione.html', name=name, sez=group)
 
+    @app.route('/about')
+    def about():
+        """Return the about page"""
+        return render_template('about.html')
+
+
     return app
