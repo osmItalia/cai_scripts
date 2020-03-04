@@ -306,6 +306,26 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         self.wjson = geojson.FeatureCollection(features)
 
 
+    def _write_feature(self, infile, feat, epsg, transproj):
+        """Write a feature into a GepJSON file
+
+        :param obj infile: the GeoJSON file object
+        :param str feat: the feature to write
+        :param int epsg: the output epsg code
+        :param obj transproj: the pyproj partial transformation
+        """
+        if epsg != 4326:
+            newgeom = transform(project, shape(feat['geometry']))
+            feat['geometry'] = mapping(newgeom)
+        try:
+            f.write(feat)
+        except:
+            for sc in schema['properties'].keys():
+                if sc not in feat['properties'].keys():
+                    feat['properties'][sc] = ''
+            f.write(feat)
+
+
     def write_geojson(self, out, typ='route', driv="GeoJSON", enc='utf-8',
                       epsg=4326):
         """Function to write GeoJSON file
@@ -342,39 +362,21 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             if typ == 'route':
                 if self.debug:
                     print("In route")
-                if len(self.gjson) == 0:
+                if not self.gjson:
                     self.create_routes_geojson()
                 if self.debug:
-                    print("Number of route {}".format(len(self.gjson)))
-                for feat in self.gjson:
-                    if epsg != 4326:
-                        newgeom = transform(project, shape(feat['geometry']))
-                        feat['geometry'] = mapping(newgeom)
-                    try:
-                        f.write(feat)
-                    except:
-                        for sc in schema['properties'].keys():
-                            if sc not in feat['properties'].keys():
-                                feat['properties'][sc] = ''
-                        f.write(feat)
+                    print("Number of route {}".format(len(self.gjson['features'])))
+                for feat in self.gjson['features']:
+                    self._write_feature(f, feat, epsg, project)
             elif typ == 'way':
                 if self.debug:
                     print("In way")
                 if len(self.wjson) == 0:
                     self.create_way_geojson()
                 if self.debug:
-                    print("Number of way {}".format(len(self.wjson)))
-                for feat in self.wjson:
-                    if epsg != 4326:
-                        newgeom = transform(project, shape(feat['geometry']))
-                        feat['geometry'] = mapping(newgeom)
-                    try:
-                        f.write(feat)
-                    except:
-                        for sc in schema['properties'].keys():
-                            if sc not in feat['properties'].keys():
-                                feat['properties'][sc] = ''
-                        f.write(feat)
+                    print("Number of way {}".format(len(self.wjson['features'])))
+                for feat in self.wjson['features']:
+                    self._write_feature(f, feat, epsg, project)
             elif typ == 'members':
                 membs = self.write_relation_members_infomont_geo()
                 for feat in membs:
