@@ -328,7 +328,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
 
     def write_geojson(self, out, typ='route', driv="GeoJSON", enc='utf-8',
                       epsg=4326):
-        """Function to write GeoJSON file
+        """Function to write file in a format supported by OGR
 
         :param str out: the path to the output GeoJSON file
         :param str typ: the type of GeoJSON to write, route - way - members are
@@ -364,6 +364,8 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                     print("In route")
                 if not self.gjson:
                     self.create_routes_geojson()
+                if not self.gjson or len(self.gjson['features']) == 0:
+                    raise Exception("No routes found")
                 if self.debug:
                     print("Number of route {}".format(len(self.gjson['features'])))
                 for feat in self.gjson['features']:
@@ -371,8 +373,10 @@ class CaiRoutesHandler(osmium.SimpleHandler):
             elif typ == 'way':
                 if self.debug:
                     print("In way")
-                if len(self.wjson) == 0:
+                if not self.wjson:
                     self.create_way_geojson()
+                if not self.wjson or len(self.wjson['features']) == 0:
+                    raise Exception("No ways found")
                 if self.debug:
                     print("Number of way {}".format(len(self.wjson['features'])))
                 for feat in self.wjson['features']:
@@ -384,9 +388,6 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                         newgeom = transform(project, shape(feat['geometry']))
                         feat['geometry'] = mapping(newgeom)
                     f.write(feat)
-            else:
-                raise ValueError("Accepted value for typ option are: 'route',"
-                                 " 'way' and 'members'")
         if driv == "ESRI Shapefile":
             cpgfile = out.replace('.shp', '.cpg')
             with open(cpgfile, 'w') as cpg:
