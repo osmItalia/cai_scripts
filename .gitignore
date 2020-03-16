@@ -7,3 +7,4 @@ build
 app/__pycache__/
 app/static/regions/*
 app/static/data/cai_osm.csv
+app/cai_scripts.conf
