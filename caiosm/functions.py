@@ -241,6 +241,7 @@ def send_mail(sub, mess, to=None, cc=None, bcc=None, attach=None, path=None,
     try:
         server.sendmail(email, toaddr, text)
         server.quit()
+        return True
     except Exception as e:
         print(e)
         print(to)
