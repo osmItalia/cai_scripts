@@ -193,38 +193,53 @@ def get_regions_from_geojson(inpath, col='Name'):
     infile = gpd.read_file(inpath)
     return list(infile[col])
 
-def send_mail(sub, mess, to, attach=None):
+def send_mail(sub, mess, to=None, cc=None, bcc=None, attach=None, path=None,
+              tls=True):
     """"""
     config = configparser.ConfigParser()
-    config.read(os.path.join(os.path.expanduser('~'), '.cai_scripts.conf'))
+    if path:
+        config.read(os.path.join(path, 'cai_scripts.ini'))
+    else:
+        config.read(os.path.join(os.path.expanduser('~'), 'cai_scripts.ini'))
     email = config['EMAIL']['email']
     password = config['EMAIL']['password']
+    host = config['EMAIL']['host']
+    port = config['EMAIL']['port']
 
     msg = MIMEMultipart()
     msg['From'] = email
-    msg['To'] = to
+    toaddr = []
+    if to:
+        msg['To'] = ', '.join(to)
+        toaddr += to
+    if cc:
+        msg['Cc'] = ', '.join(cc)
+        toaddr += cc
+    if bcc:
+        msg['Bcc'] = ', '.join(bcc)
+        toaddr += bcc
     msg['Subject'] = sub
 
     msg.attach(MIMEText(mess, 'plain'))
 
     if attach:
         # Setup the attachment
-        filename = os.path.basename(file_location)
-        attachment = open(file_location, "rb")
+        attachment = open(attach, "rb")
         part = MIMEBase('application', 'octet-stream')
         part.set_payload(attachment.read())
         encoders.encode_base64(part)
-        part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
-
+        part.add_header('Content-Disposition',
+                        "attachment; filename=%s" % attachment.name)
         # Attach the attachment to the MIMEMultipart object
         msg.attach(part)
 
-    server = smtplib.SMTP('smtp.gmail.com', 587)
-    server.starttls()
+    server = smtplib.SMTP(host, port)
+    if tls:
+        server.starttls()
     server.login(email, password)
     text = msg.as_string()
     try:
-        server.sendmail(email, to, text)
+        server.sendmail(email, toaddr, text)
         server.quit()
     except Exception as e:
         print(e)
