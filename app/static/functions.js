@@ -174,7 +174,7 @@ function highlightStyleFunction(feature, resolution) {
 var osm = new ol.layer.Tile({
 	source: new ol.source.OSM()
 });
-var map, features, table;
+var map, features, table, routes_source;
 
 function home_map(){
     var md = new MobileDetect(window.navigator.userAgent);
@@ -264,7 +264,7 @@ function home_table(){
 
 function region_map(region) {
 	 
-	 var routes_source = new ol.source.Vector({
+	 routes_source = new ol.source.Vector({
 	     url: '/static/regions/'+region+'.geojson',
 	     format: new ol.format.GeoJSON()
 	 })
@@ -318,6 +318,7 @@ function region_table(region){
 	 $.fn.dataTable.ext.errMode = 'none';
 	 table = $('#osmtable').DataTable({
 	      scrollY: '90vh',
+	      responsive: true, 
         "ajax": {
         	    url: '/static/regions/'+region+'.json',
         	    dataSrc: ''
@@ -357,7 +358,7 @@ function region_table(region){
 }
 
 function sezione_map(region) {
-	 var routes_source = new ol.source.Vector({
+	 routes_source = new ol.source.Vector({
 	     url: '/sezionegeojson/'+region,
 	     format: new ol.format.GeoJSON()
 	 })
@@ -399,6 +400,8 @@ function sezione_map(region) {
          routes.setStyle(highlightStyleFunction);
          console.log(feature.get('state'));
   	     table.columns(0).search(feature.get('id')).draw();
+  	   } else {
+  	     console.log("nessun elemento selezionato")
   	   }
 	 })
 }
@@ -406,6 +409,8 @@ function sezione_map(region) {
 function sezione_table(region){
 	 $.fn.dataTable.ext.errMode = 'none';
 	 table = $('#osmtable').DataTable({
+	      scrollY: '90vh',
+	      responsive: true,
         "ajax": {
         	    url: '/sezionejson/'+region,
         	    dataSrc: ''
@@ -465,4 +470,13 @@ function home_regions_nav(){
 
 function clearFilter(){
     table.search( '' ).columns().search( '' ).draw();
+}
+
+function download_geojson() {
+    console.log('in downgejson');
+    const format = new ol.format.GeoJSON({featureProjection: 'EPSG:4326'});
+    const features = routes_source.getFeatures();
+    const json = format.writeFeatures(features);
+    console.log(json);
+    window.location.href = 'data:text/json;charset=utf-8,' + json;
 }
