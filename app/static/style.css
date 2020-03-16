@@ -20,8 +20,9 @@ footer {
 
 a {
   color: black;
-  text-decoration: none;
+  text-decoration: underline;
 }
+
 a:hover {
   color: var(--redcolor);
 }
@@ -162,7 +163,10 @@ footer a:hover {
   margin: 5px;
 }
 
-.btn-primary:hover {
+.btn-primary:hover,
+.btn-primary:checked,
+.btn-primary:active, 
+.btn-primary:focus {
   background-color: var(--darkgrey);
   border-color: var(--darkgrey);
 }
