@@ -672,12 +672,17 @@ relation
         jsonosm = xmltodict.parse(self.osmdata)
         output = []
         for change in jsonosm['osm']['action']:
-            if 'node' in change.keys():
-                data = change['node']
-            elif 'way' in change.keys():
-                data = change['way']
-            elif 'relation' in change.keys():
-                data = change['relation']
+            if change['@type'] in ['modify', 'delete']:
+                value = change['new']
+            elif change['@type'] == 'create':
+                value = change
+
+            if 'node' in value.keys():
+                data = value['node']
+            elif 'way' in value.keys():
+                data = value['way']
+            elif 'relation' in value.keys():
+                data = value['relation']
             else:
                 continue
             changedata = dateutil.parser.parse(data['@timestamp'])
