@@ -22,7 +22,7 @@
             </tr>
         </thead>
     </table>
-    <input type="button" value="Clear results" onclick="clearFilter()"/>        
+    <input type="button" value="Clear results" onclick="clearFilter()"/>
 {% endblock %}
 {% block jsscript %}
   <script src="{{ url_for('static', filename='jquery.dataTables.min.js') }}"></script>
@@ -34,6 +34,24 @@
 	    });
 	    sezione_map('{{ sez }}');
 	    sezione_table('{{ sez }}');
+	    $('#map').append('<div id="downbutton">Scarica i dati nei seguenti formati<br>'+
+	                     '<button type="button" class="btn btn-primary btn-lg" id="downgeojson">GeoJSON</button>'+
+	                     '<button type="button" class="btn btn-primary btn-lg" id="downgpx">GPX</button>'+
+	                     '<button type="button" class="btn btn-primary btn-lg" id="downpdf">PDF</button></div>')
+	    $( "#downgeojson" ).click(function(e) {
+	      e.preventDefault();  //stop the browser from following
+        download_geojson('{{ name }}.geojson');
+      });
+
+      $( "#downgpx" ).click(function(e) {
+        e.preventDefault();  //stop the browser from following
+        download_gpx('{{ name }}.gpx');
+      });
+
+      $( "#downpdf" ).click(function(e) {
+        e.preventDefault();  //stop the browser from following
+        download_section_pdf('{{ sez }}');
+      });
 	 });
   </script>
 {% endblock %}

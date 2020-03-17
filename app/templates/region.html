@@ -23,7 +23,7 @@
                   <th>Tool</th>
               </tr>
           </thead>
-      </table>  
+      </table>
     </div>
     <input type="button" value="Clear results" onclick="clearFilter()"/>
     <h2>Sezioni della regione</h2>
@@ -44,7 +44,7 @@
 	   <div class="col-lg-3 col-sm-6 sectioname">{{ codetext|safe }}</div>
 	   {% endif %}
     {% endfor %}
-    
+
     </div>
 {% endblock %}
 {% block jsscript %}
@@ -57,6 +57,24 @@
 	    });
 	    region_map('{{ name }}');
 	    region_table('{{ name }}');
+	    $('#map').append('<div id="downbutton">Scarica i dati nei seguenti formati<br>'+
+	                     '<button type="button" class="btn btn-primary btn-lg" id="downgeojson">GeoJSON</button>'+
+	                     '<button type="button" class="btn btn-primary btn-lg" id="downgpx">GPX</button>'+
+	                     '<button type="button" class="btn btn-primary btn-lg" id="downpdf">PDF</button></div>')
+	    $( "#downgeojson" ).click(function(e) {
+	      e.preventDefault();  //stop the browser from following
+        download_geojson('{{ name }}.geojson');
+      });
+
+      $( "#downgpx" ).click(function(e) {
+        e.preventDefault();  //stop the browser from following
+        download_gpx('{{ name }}.gpx');
+      });
+
+      $( "#downpdf" ).click(function(e) {
+        e.preventDefault();  //stop the browser from following
+        download_region_pdf('{{ name }}');
+      });
 	 });
   </script>
 {% endblock %}

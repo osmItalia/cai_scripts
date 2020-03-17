@@ -49,14 +49,14 @@
 	      <div class="col-4 col-sm-4">
           <small>
     	      Sito realizzato da Luca Delucchi della Fondazione Edmund Mach
-    	    </small>	      
+    	    </small>
 	      </div>
 	      <div class="col-4 col-sm-4"></div>
 	      <div class="col-4 col-sm-4">
           <small>
     	      Dati forniti da © <a href="© OpenStreetMap contributors" target="_blank">OpenStreetMap contributors</a>,
     	      rilasciati con licenza <a href="https://opendatacommons.org/licenses/odbl/index.html" target="_blank">Open Database License</a>
-    	    </small>	     
+    	    </small>
 	      </div>
 	    </div>
 	  </footer>
@@ -65,6 +65,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='mobile-detect.min.js') }}"></script>
     <script src="{{ url_for('static', filename='ol.js') }}"></script>
+    <script src="{{ url_for('static', filename='FileSaver.min.js') }}"></script>
     <script src="{{ url_for('static', filename='functions.js') }}"></script>
     <script>
     $(document).ready(function() {
@@ -72,10 +73,10 @@
 		   // Disable caching of AJAX responses
 		   cache: false
 	    });
-	    home_regions_nav();	
+	    home_regions_nav();
 	 });
    </script>
     {% block jsscript %}{% endblock %}
-    
+
   </body>
 </html>
