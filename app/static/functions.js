@@ -462,7 +462,7 @@ function home_regions_nav(){
             regions.sort()
             for (var i=0; i<regions.length; i++) {
               regname = regions[i];
-              $('#navregions').append('<a href="/regione/' + regname.toLowerCase() + '"><li>' + regname + '</li></a>');
+              $('#navregions').append('<a href="/regione/' + slugify(regname.toLowerCase()) + '"><li>' + regname + '</li></a>');
             }
         }
     })
@@ -472,11 +472,43 @@ function clearFilter(){
     table.search( '' ).columns().search( '' ).draw();
 }
 
-function download_geojson() {
-    console.log('in downgejson');
+function SaveAsFile(tex,filen,encod) {
+    try {
+        var b = new Blob([tex],{type:encod});
+        saveAs(b, filen);
+    } catch (e) {
+        console.log(e);
+        window.open("data:"+encod+"," + encodeURIComponent(tex), '_blank','');
+    }
+}
+
+function SaveAsUrl(url, filen, encod) {
+    try {
+        saveAs(url, filen);
+    } catch (e) {
+        console.log(e);
+        window.open("data:"+encod+"," + url, '_blank','');
+    }
+}
+
+function download_geojson(fname) {
     const format = new ol.format.GeoJSON({featureProjection: 'EPSG:4326'});
     const features = routes_source.getFeatures();
     const json = format.writeFeatures(features);
-    console.log(json);
-    window.location.href = 'data:text/json;charset=utf-8,' + json;
+    SaveAsFile(json, fname, 'text/json;charset=utf-8');
+}
+
+function download_gpx(fname) {
+    const format = new ol.format.GPX({featureProjection: 'EPSG:4326'});
+    const features = routes_source.getFeatures();
+    const json = format.writeFeatures(features);
+    SaveAsFile(json, fname, 'text/xml;charset=utf-8');
+}
+
+function download_region_pdf(fname) {
+    SaveAsUrl('/regionepdf/'+fname, fname + '.pdf', 'application/pdf;base64');
+}
+
+function download_section_pdf(fname) {
+    SaveAsUrl('/sezionepdf/'+fname, fname + '.pdf', 'application/pdf;base64');
 }
