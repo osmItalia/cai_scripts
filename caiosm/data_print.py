@@ -177,7 +177,11 @@ class CaiOsmReport:
         refs = []
         outfiles = []
         # create the single document for each relation
-        for elem in self.json:
+        if self.geo:
+            feats = self.json['features']
+        else:
+            feats = self.json
+        for elem in feats:
             if self.geo:
                 idd = elem['properties']['id']
             else:
