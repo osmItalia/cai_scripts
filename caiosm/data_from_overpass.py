@@ -9,7 +9,9 @@ import os
 import json
 import geojson
 import urllib.request
+from urllib.error import HTTPError
 import tempfile
+import time
 from datetime import date
 from datetime import timedelta
 import dateutil.parser
@@ -60,7 +62,13 @@ class CaiOsmBase:
         data = urllib.parse.urlencode(values)
         data = data.encode('utf-8') # data should be bytes
         req = urllib.request.Request(self.url, data)
-        resp = urllib.request.urlopen(req)
+        try:
+            resp = urllib.request.urlopen(req)
+        except HTTPError as e:
+            if e.code == 429:
+                 time.sleep(240);
+                 self._get_data(instr)
+            raise
         respData = resp.read()
         return respData.decode(encoding='utf-8', errors='ignore')
 
