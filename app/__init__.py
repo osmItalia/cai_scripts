@@ -8,19 +8,27 @@ Created on Mon Apr 22 16:28:42 2019
 
 import os
 import time
+import json
 from datetime import datetime
+import configparser
 from flask import Flask
 from flask import render_template
 from flask import jsonify
+from flask import send_file
 from slugify import slugify
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from caiosm.data_from_overpass import CaiOsmRoute
 from caiosm.data_from_overpass import CaiOsmSourceRef
 from caiosm.data_from_overpass import CaiOsmRouteSourceRef
+from caiosm.data_print import CaiOsmReport
 from caiosm.functions import get_regions_from_geojson
 
 DIRFILE = os.path.dirname(os.path.realpath(__file__))
+MEDIADIR = os.path.join(DIRFILE, 'media')
+
+config = configparser.ConfigParser()
+config.read(os.path.join(DIRFILE, 'cai_scripts.ini'))
 
 def get_data():
     print("Get data {}".format(datetime.now()))
@@ -31,12 +39,14 @@ def get_data():
         regslug = slugify(reg)
         cod = CaiOsmRoute(area=reg)
         cod.get_cairoutehandler()
-        cod.write(os.path.join(inpath, 'regions', "{}.geojson".format(regslug)),
-                  'geojson')
-        time.sleep(120)
+        gjsfile = os.path.join(inpath, 'regions', "{}.geojson".format(regslug))
+        cod.write(gjsfile, 'geojson')
+        jsobj = json.load(gjsfile)
+        cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
+        cor.write_book(regslug, pdf=True)
         cod.write(os.path.join(inpath, 'regions', "{}.json".format(regslug)),
                                'tags')
-        time.sleep(480)
+        time.sleep(config['MISC']['overpasstime'])
     return True
 
 def get_sezioni():
@@ -67,6 +77,9 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
+
+    if not os.path.exists(MEDIADIR):
+        os.mkdir(MEDIADIR)
 
     sched = BackgroundScheduler(daemon=True)
     sched.add_job(get_sezioni, CronTrigger.from_crontab('0 0 * * *'))
@@ -116,5 +129,23 @@ def create_app(test_config=None):
         """Return the about page"""
         return render_template('about.html')
 
+    @app.route('/regionepdf/<region>')
+    def regionepdf(region):
+        """Return PDF for a region"""
+        fi = open(os.path.join(MEDIADIR, '{}.pdf'.format(region)), 'rb')
+        return send_file(fi, attachment_filename='{}.pdf'.format(region),
+                         mimetype='application/pdf')
+
+    @app.route('/sezionepdf/<group>')
+    def sezionepdf(group):
+        corsr = CaiOsmRouteSourceRef(group)
+        corsr.get_cairoutehandler()
+        corsr.cch.create_routes_geojson()
+        jsobj = corsr.get_geojson()
+        cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
+        cor.write_book(group, pdf=True)
+        fi = open(os.path.join(MEDIADIR, '{}.pdf'.format(group)), 'rb')
+        return send_file(fi, attachment_filename='{}.pdf'.format(group),
+                         mimetype='application/pdf')
 
     return app
