@@ -462,7 +462,7 @@ function home_regions_nav(){
             regions.sort()
             for (var i=0; i<regions.length; i++) {
               regname = regions[i];
-              $('#navregions').append('<a href="/regione/' + slugify(regname.toLowerCase()) + '"><li>' + regname + '</li></a>');
+              $('#navregions').append('<a href="/regione/' + slugify(regname.toLowerCase()) + '" class="dropdown-item">' + regname + '</a>');
             }
         }
     })
