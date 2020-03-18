@@ -1,7 +1,10 @@
 :root{
   --redcolor: #e74c3c;
   --greycolor: #848484;
-  --darkgrey: #535353
+  --darkgrey: #535353;
+  --darkblue: #06293f;
+  --mediumblue: #0f4d71;
+  --lightblue: #66a5e3;
 }
 
 h1, h2, h3, footer {
@@ -9,13 +12,15 @@ h1, h2, h3, footer {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: var(--greycolor);
-  text-shadow: -1px 0 var(--redcolor), 0 1px var(--redcolor), 1px 0 var(--redcolor), 0 -1px var(--redcolor);
+  color: var(--darkblue);
+  text-shadow: -1px 0 var(--lightblue), 0 1px var(--lightblue), 1px 0 var(--lightblue), 0 -1px var(--lightblue);
 }
 
 footer {
   margin-top: 10px;
-  background-color: var(--redcolor);
+  background-color: var(--mediumblue);
+  color: white;
+  min-height: 5vh;
 }
 
 a {
@@ -24,11 +29,11 @@ a {
 }
 
 a:hover {
-  color: var(--redcolor);
+  color: var(--mediumblue);
 }
 
-footer {
-  min-height: 5vh;
+footer a {
+  color: whitesmoke;
 }
 
 .vertmid {
@@ -82,7 +87,7 @@ footer a:hover {
 #menu-nav {
   max-width: 1000px;
   margin: 5px auto;
-  background-color: #ecf0f1;
+  background-color: var(--mediumblue);
   border-radius: 4px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
@@ -103,7 +108,7 @@ footer a:hover {
 {
   display: block;
   position: absolute;
-  background-color: #ecf0f1;
+  background-color: var(--mediumblue);
   z-index: 1000;
   height: 50vh;
   overflow: auto;
@@ -121,7 +126,7 @@ footer a:hover {
 }
 
 #navigation-bar a {
-  color: var(--greycolor);
+  color: white;
   font-size: 20px;
   text-decoration: none;
   text-align: center;
@@ -131,8 +136,9 @@ footer a:hover {
   transition: all 0.3s ease;
 }
 #navigation-bar a:hover {
-  color: var(--redcolor);
+  color: var(--lightblue);
 }
+
 #navigation-bar a::before {
   content: "";
   transition: all 0.4s ease-in-out;
@@ -141,11 +147,12 @@ footer a:hover {
   left: 50%;
   bottom: 0;
   height: 2px;
-  background-color: var(--redcolor);
+  background-color: var(--lightblue);
 }
 #navigation-bar a:hover::before {
   right: 0;
   left: 0;
+  background-color: var(--darkblue);
 }
 
 #navigation-bar li:hover ul a {
@@ -158,8 +165,8 @@ footer a:hover {
 }
 
 .btn-primary {
-  background-color: var(--greycolor);
-  border-color: var(--greycolor);
+  background-color: var(--mediumblue);
+  border-color: var(--mediumblue);
   margin: 5px;
 }
 
@@ -167,8 +174,8 @@ footer a:hover {
 .btn-primary:checked,
 .btn-primary:active, 
 .btn-primary:focus {
-  background-color: var(--darkgrey);
-  border-color: var(--darkgrey);
+  background-color: var(--darkblue);
+  border-color: var(--darkblue);
 }
 
 #downbutton{
