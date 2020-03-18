@@ -17,6 +17,7 @@ from shapely.geometry import mapping
 from shapely.geometry import shape
 from shapely.ops import transform
 import fiona
+import fiona.crs
 import pyproj
 from functools import partial
 
@@ -306,24 +307,25 @@ class CaiRoutesHandler(osmium.SimpleHandler):
         self.wjson = geojson.FeatureCollection(features)
 
 
-    def _write_feature(self, infile, feat, epsg, transproj):
+    def _write_feature(self, infile, feat, epsg, transproj, schema):
         """Write a feature into a GepJSON file
 
         :param obj infile: the GeoJSON file object
         :param str feat: the feature to write
         :param int epsg: the output epsg code
         :param obj transproj: the pyproj partial transformation
+        :param obj schema: the schema for feature
         """
         if epsg != 4326:
-            newgeom = transform(project, shape(feat['geometry']))
+            newgeom = transform(transproj, shape(feat['geometry']))
             feat['geometry'] = mapping(newgeom)
         try:
-            f.write(feat)
+            infile.write(feat)
         except:
             for sc in schema['properties'].keys():
                 if sc not in feat['properties'].keys():
                     feat['properties'][sc] = ''
-            f.write(feat)
+            infile.write(feat)
 
 
     def write_geojson(self, out, typ='route', driv="GeoJSON", enc='utf-8',
@@ -353,6 +355,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                                  " 'way' and 'members'")
         if self.debug:
             print(schema)
+        project = None
         if epsg != 4326:
             inepsg = "EPSG:{}".format(epsg)
             project = partial(pyproj.transform, pyproj.Proj(init='EPSG:4326'),
@@ -369,7 +372,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                 if self.debug:
                     print("Number of route {}".format(len(self.gjson['features'])))
                 for feat in self.gjson['features']:
-                    self._write_feature(f, feat, epsg, project)
+                    self._write_feature(f, feat, epsg, project, schema)
             elif typ == 'way':
                 if self.debug:
                     print("In way")
@@ -380,7 +383,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
                 if self.debug:
                     print("Number of way {}".format(len(self.wjson['features'])))
                 for feat in self.wjson['features']:
-                    self._write_feature(f, feat, epsg, project)
+                    self._write_feature(f, feat, epsg, project, schema)
             elif typ == 'members':
                 membs = self.write_relation_members_infomont_geo()
                 for feat in membs:
