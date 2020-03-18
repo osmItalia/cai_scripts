@@ -219,8 +219,8 @@ function home_map(){
             zoom: 6
         })
     });
-    if (md.mobile() != null){
-   	map.setZoom(5);
+    if (md.phone() != null){
+   	    map.getView().setZoom(5);
     }
     
 
