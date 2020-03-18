@@ -35,8 +35,9 @@ class ManageChanges():
             return False
         self.text = self._set_text()
         self.config = configparser.ConfigParser()
-        if path:
-            self.config.read(os.path.join(path, 'cai_scripts.ini'))
+        self.path = path
+        if self.path:
+            self.config.read(os.path.join(self.path, 'cai_scripts.ini'))
         else:
             self.config.read(os.path.join(os.path.expanduser('~'), 'cai_scripts.ini'))
 
@@ -54,14 +55,19 @@ class ManageChanges():
 
         return self.title + outext
 
-    def mail(self, bccs, path=None):
+    def mail(self, bccs=None, ccs=None, path=None):
         """Function to send mail with new changeset
 
-        :params list bccs: a list of mails to send in bbc
+        :params list bccs: a list of mails to send in bcc
+        :params list ccs: a list of mails to send in cc
         :params str path: the path to the ini file
         """
+        if not path:
+            path = self.path
+        if not bccs and not ccs:
+            raise Exception("Uno tra i campi ccs e bccs dev'essere popolato")
         send_mail(sub="Aggiornamento dai CAI in OSM", mess=self.text, bcc=bccs,
-                  path=path)
+                  cc=ccs, path=path)
 
     def telegram(self, token=None, chatid=None):
         """Function to telegram update with new changeset
