@@ -32,7 +32,7 @@ class ManageChanges():
         self.changes = self.cord.get_changeset()
         if not self.changes:
             print("No changes")
-            return False
+            return None
         self.text = self._set_text()
         self.config = configparser.ConfigParser()
         self.path = path
