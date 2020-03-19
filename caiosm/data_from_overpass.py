@@ -679,7 +679,7 @@ relation
             self.get_data_osm(network=network)
         jsonosm = xmltodict.parse(self.osmdata)
         if 'action' not in jsonosm['osm'].keys():
-            return False
+            return []
         output = []
         for change in jsonosm['osm']['action']:
             if change['@type'] in ['modify', 'delete']:
