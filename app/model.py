@@ -69,7 +69,33 @@ def delete_user(email):
         out = "È stato eliminato l'utente {us}".format(us=email)
     else:
         out = "L'utente {us} non esiste".format(us=email)
-    return out    
+    return out
+
+def delete_user_region(email, slugregion, delete=True):
+    """Delete a region for a email
+
+    :param str email: the email address to consider
+    :param str slugregion: the slugfied name of the region
+    :param bool delete: delete completely the user if it has no region anymore
+    """
+    reg = Region.query.filter_by(slugname=slugregion).first()
+    exists = User.query.filter_by(email=email).first()
+    if exists:
+        exists.regions.remove(reg)
+        db.session.commit()
+        exists = User.query.filter_by(email=email).first()
+        if len(exists.regions) == 0 and delete:
+            db.session.delete(exists)
+            db.session.commit()
+            out = "È stato eliminato l'utente {us} poichè non aveva più " \
+                  "nessuna regione di interesse".format(us=email)
+        else:
+            out = "È stata eliminata la region {re} dall'utente {us}".format(re=reg.name,
+                                                                             us=email)
+    else:
+        out = "L'utente {us} non esiste".format(us=email)
+    return out
+
 
 def select_users(slugregion):
     """Function to return all user for a region
