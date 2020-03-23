@@ -317,7 +317,7 @@ function find_route(value){
 function region_table(region){
 	 $.fn.dataTable.ext.errMode = 'none';
 	 table = $('#osmtable').DataTable({
-	      scrollY: '90vh',
+	      scrollY: '80vh',
 	      responsive: true, 
         "ajax": {
         	    url: '/static/regions/'+region+'.json',
@@ -409,7 +409,7 @@ function sezione_map(region) {
 function sezione_table(region){
 	 $.fn.dataTable.ext.errMode = 'none';
 	 table = $('#osmtable').DataTable({
-	      scrollY: '90vh',
+	      scrollY: '80vh',
 	      responsive: true,
         "ajax": {
         	    url: '/sezionejson/'+region,
