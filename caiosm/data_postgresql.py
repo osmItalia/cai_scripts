@@ -140,10 +140,9 @@ class CaiOsmPg():
     def print_italy(self, fname='cai_map_italy.png'):
         """Create an simple map for the entire Italy with routes"""
         paths = gpd.read_postgis("select * from planet_osm_line where {}".format(self.cai_where),
-                                 self.conn, geom_col='way',
-                                 crs={'init': u'epsg:32632'})
+                                 self.conn, geom_col='way', crs='epsg:32632')
         region = gpd.read_postgis(self.regsql, self.conn, geom_col='poly',
-                                  crs={'init': u'epsg:32632'})
+                                  crs='epsg:32632')
         self._print(region, paths)
 
     def print_region(self, region):
@@ -157,14 +156,13 @@ class CaiOsmPg():
                                  "planet_osm_line where {CAIWHERE}) as cai " \
                                  "where ST_intersects(way, poly)".format(REG=region,
                                  CAIWHERE=self.cai_where), self.conn,
-                                 geom_col='way', crs={'init': u'epsg:32632'})
+                                 geom_col='way', crs='epsg:32632')
         region = gpd.read_postgis("select name as reg, st_union(way) as poly" \
                                   " from planet_osm_polygon where admin_level"\
                                   "='4' and boundary='administrative' and " \
                                   "tags ? 'ISO3166-2' and tags ? 'ref:ISTAT' " \
                                   "and name='{REG}' group by name".format(REG=region),
-                                  self.conn, geom_col='poly',
-                                  crs={'init': u'epsg:32632'})
+                                  self.conn, geom_col='poly', crs='epsg:32632')
         self._print(region, paths)
 
     def print_all_regions(self):

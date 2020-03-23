@@ -170,7 +170,7 @@ def create_map(geom, out):
     :param str out: path out the output img file
     """
     gs = gpd.GeoSeries(geom)
-    gs.crs = {'init': 'epsg:4326'}
+    gs.crs = 'epsg:4326'
     gs = gs.to_crs(epsg=3857)
     ax = gs.plot(figsize=(10, 10), alpha=0.5, color='r')
     ax.axes.get_yaxis().set_visible(False)
