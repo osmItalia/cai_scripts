@@ -31,7 +31,6 @@ class ManageChanges():
             self.title = "Aggiornamento dati per {}\n\n".format(area)
         self.changes = self.cord.get_changeset()
         if not self.changes:
-            print("No changes")
             return None
         self.text = self._set_text()
         self.config = configparser.ConfigParser()
