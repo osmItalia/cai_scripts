@@ -7,7 +7,9 @@
 {% block subtitle %}<h2>{{ name|upper }}</h2>{% endblock %}
 
 {% block routes %}
-    <table id="osmtable" class="display" style="width:100%">
+    <div class="tablesez tbpadding">
+      <h2>I sentieri</h2>
+      <table id="osmtable" class="display" style="width:100%">
         <thead>
             <tr>
                 <th>Id</th>
@@ -21,8 +23,9 @@
                 <th>Tool</th>
             </tr>
         </thead>
-    </table>
-    <input type="button" value="Clear results" onclick="clearFilter()"/>
+      </table>
+      <input type="button" value="Clear results" onclick="clearFilter()"/>
+    </div>
 {% endblock %}
 {% block jsscript %}
   <script src="{{ url_for('static', filename='jquery.dataTables.min.js') }}"></script>

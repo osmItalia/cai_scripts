@@ -15,14 +15,20 @@ from flask import Flask
 from flask import render_template
 from flask import jsonify
 from flask import send_file
+from flask import request
 from slugify import slugify
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
+from flask_apscheduler import APScheduler
 from caiosm.data_from_overpass import CaiOsmRoute
 from caiosm.data_from_overpass import CaiOsmSourceRef
 from caiosm.data_from_overpass import CaiOsmRouteSourceRef
+from caiosm.data_diff import ManageChanges
 from caiosm.data_print import CaiOsmReport
 from caiosm.functions import get_regions_from_geojson
+from .model import db
+from .model import select_users
+from .model import insert_user
+from .model import delete_user
+from .model import delete_region_user
 
 DIRFILE = os.path.dirname(os.path.realpath(__file__))
 MEDIADIR = os.path.join(DIRFILE, 'media')
@@ -30,6 +36,24 @@ MEDIADIR = os.path.join(DIRFILE, 'media')
 config = configparser.ConfigParser()
 config.read(os.path.join(DIRFILE, 'cai_scripts.ini'))
 
+sched = APScheduler()
+
+class GeneralError(Exception):
+    status_code = 400
+
+    def __init__(self, message, status_code=None, payload=None):
+        Exception.__init__(self)
+        self.message = message
+        if status_code is not None:
+            self.status_code = status_code
+        self.payload = payload
+
+    def to_dict(self):
+        rv = dict(self.payload or ())
+        rv['message'] = self.message
+        return rv
+
+@sched.task('cron', id='get_data', week='*', minute=30, hour=00)
 def get_data():
     print("Get data {}".format(datetime.now()))
     inpath = os.path.join(DIRFILE, 'static')
@@ -37,18 +61,37 @@ def get_data():
                                                     'italy.geojson'))
     for reg in regions:
         regslug = slugify(reg)
-        cod = CaiOsmRoute(area=reg)
-        cod.get_cairoutehandler()
         gjsfile = os.path.join(inpath, 'regions', "{}.geojson".format(regslug))
-        cod.write(gjsfile, 'geojson')
-        jsobj = json.load(gjsfile)
-        cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
-        cor.write_book(regslug, pdf=True)
-        cod.write(os.path.join(inpath, 'regions', "{}.json".format(regslug)),
-                               'tags')
-        time.sleep(config['MISC']['overpasstime'])
+        mc = ManageChanges(area=reg, path=DIRFILE)
+        if len(mc.changes) > 0:
+            print("{} has changes".format(reg))
+            with db.app.app_context():
+                mails = select_users(regslug)
+            if mails:
+                mc.mail(bccs=mails)
+            mc.telegram(token=config['TELEGRAM']['token'],
+                        chatid=config['TELEGRAM']['chatid'])
+            time.sleep(int(config['MISC']['overpasstime'])/2)
+            cod = CaiOsmRoute(area=reg)
+            cod.get_cairoutehandler()
+            cod.write(gjsfile, 'geojson')
+            jsobj = json.load(open(gjsfile))
+            cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
+            cor.write_book(regslug, pdf=True)
+            cod.write(os.path.join(inpath, 'regions',
+                                   "{}.json".format(regslug)),
+                      'tags')
+        else:
+            print("{} has NO changes".format(reg))
+            if not os.path.exists(os.path.join(MEDIADIR,
+                                               '{}.pdf'.format(regslug))):
+                jsobj = json.load(open(gjsfile))
+                cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
+                cor.write_book(regslug, pdf=True)
+        time.sleep(int(config['MISC']['overpasstime']))
     return True
 
+@sched.task('cron', id='get_sezioni', week='*', minute=01, hour=00)
 def get_sezioni():
     print("Get sezioni {}".format(datetime.now()))
     cosr = CaiOsmSourceRef()
@@ -61,7 +104,12 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SQLALCHEMY_DATABASE_URI=config['DATABASE']['SQLALCHEMY_DATABASE_URI'],
+        SQLALCHEMY_TRACK_MODIFICATIONS=config['DATABASE']['SQLALCHEMY_TRACK_MODIFICATIONS'],
+        SCHEDULER_API_ENABLED = True
     )
+    db.app = app
+    db.init_app(app)
+
     cosr = CaiOsmSourceRef()
     cosr.get_list_codes()
 
@@ -78,10 +126,15 @@ def create_app(test_config=None):
     if not os.path.exists(MEDIADIR):
         os.mkdir(MEDIADIR)
 
-    sched = BackgroundScheduler(daemon=True)
-    sched.add_job(get_sezioni, CronTrigger.from_crontab('0 0 * * *'))
-    sched.add_job(get_data, CronTrigger.from_crontab('30 0 * * *'))
+    sched.init_app(app)
     sched.start()
+
+    @app.errorhandler(GeneralError)
+    def handle_invalid_usage(error):
+        response = error
+        response.status_code = error.status_code
+        return response
+
 
     # a simple page that says hello
     @app.route('/')
@@ -144,5 +197,58 @@ def create_app(test_config=None):
         fi = open(os.path.join(MEDIADIR, '{}.pdf'.format(group)), 'rb')
         return send_file(fi, attachment_filename='{}.pdf'.format(group),
                          mimetype='application/pdf')
+
+    @app.route('/insertmail', methods=['POST'])
+    def insertmail():
+        data = request.json
+        if not data:
+            data = request.form
+            if not data:
+                raise GeneralError('Nessun dato')
+        err = ''
+        if 'email' not in data.keys():
+            err += "Manca l'indirizzo email. "
+        if 'reg' not in data.keys():
+            err += "Manca la regione d'interesse."
+        if err:
+            raise GeneralError(err)
+        out = insert_user(data['email'], data['reg'])
+        return jsonify({'response': out})
+
+    @app.route('/deleteregionmail', methods=['POST'])
+    def deleteregionmail():
+        data = request.json
+        if not data:
+            data = request.form
+            if not data:
+                raise GeneralError('Nessun dato')
+        err = ''
+        if 'email' not in data.keys():
+            err += "Manca l'indirizzo email. "
+        if 'reg' not in data.keys():
+            err += "Manca la regione d'interesse."
+        if 'deleteuser' not in data.keys():
+            delete = False
+        else:
+            if data['deleteuser'] == 'true':
+                delete = True
+            else:
+                delete = False
+        if err:
+            raise GeneralError(err)
+        out = delete_region_user(data['email'], data['reg'], delete)
+        return jsonify({'response': out})
+
+    @app.route('/deletemail', methods=['POST'])
+    def deletemail():
+        data = request.json
+        if not data:
+            data = request.form
+            if not data:
+                raise GeneralError('Nessun dato')
+        if 'email' not in data.keys():
+            raise GeneralError("Manca l'indirizzo email")
+        out = delete_user(data['email'])
+        return jsonify({'response': out})
 
     return app
