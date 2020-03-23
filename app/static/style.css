@@ -23,6 +23,11 @@ footer {
   min-height: 5vh;
 }
 
+.tbpadding {
+  padding-bottom: 1rem;
+  padding-top: 1rem;
+}
+
 a {
   color: black;
   text-decoration: underline;
@@ -41,15 +46,19 @@ footer a {
 }
 
 footer a:hover {
-  color: grey;
+  color: var(--lightblue);
 }
 
 #map {
-  height: 90vh;
+  height: 80vh;
+}
+
+#tablesez {
+  height: 80vh;
 }
 
 .sectioname {
-  padding: 0.2rem;
+  padding: 0.8rem;
 }
 
 .tag {
@@ -74,7 +83,6 @@ footer a:hover {
 }
 
 .navbar {
-  margin: 5px auto;
   background-color: var(--mediumblue);
 }
 
@@ -135,10 +143,10 @@ footer a:hover {
   border-color: var(--darkblue);
 }
 
-#downbutton{
+#downbutton {
   position: relative;
   display: inline-block;
-  top: -85vh;
+  top: -75vh;
   right: -35vw;
   padding: 10px;
   background-color: rgba(255,255,255, 0.6);
