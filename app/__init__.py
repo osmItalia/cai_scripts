@@ -53,7 +53,7 @@ class GeneralError(Exception):
         rv['message'] = self.message
         return rv
 
-@sched.task('cron', id='get_data', week='*', minute=30, hour=00)
+@sched.task('cron', id='get_data', week='*', minute=30, hour=0)
 def get_data():
     print("Get data {}".format(datetime.now()))
     inpath = os.path.join(DIRFILE, 'static')
@@ -91,7 +91,7 @@ def get_data():
         time.sleep(int(config['MISC']['overpasstime']))
     return True
 
-@sched.task('cron', id='get_sezioni', week='*', minute=01, hour=00)
+@sched.task('cron', id='get_sezioni', week='*', minute=1, hour=0)
 def get_sezioni():
     print("Get sezioni {}".format(datetime.now()))
     cosr = CaiOsmSourceRef()
