@@ -2,7 +2,6 @@ affine==2.3.0
 APScheduler==3.6.3
 attrs==19.3.0
 backcall==0.1.0
-caiosm==0.3.0
 Cartopy==0.17.1.dev147+head.detached.at.5e624fe
 certifi==2019.11.28
 cffi==1.14.0
