@@ -24,11 +24,11 @@ from caiosm.data_from_overpass import CaiOsmRouteSourceRef
 from caiosm.data_diff import ManageChanges
 from caiosm.data_print import CaiOsmReport
 from caiosm.functions import get_regions_from_geojson
-from .model import db
-from .model import select_users
-from .model import insert_user
-from .model import delete_user
-from .model import delete_region_user
+from app.model import db
+from app.model import select_users
+from app.model import insert_user
+from app.model import delete_user
+from app.model import delete_region_user
 
 DIRFILE = os.path.dirname(os.path.realpath(__file__))
 MEDIADIR = os.path.join(DIRFILE, 'media')
