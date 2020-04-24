@@ -38,6 +38,29 @@ config.read(os.path.join(DIRFILE, 'cai_scripts.ini'))
 
 sched = APScheduler()
 
+class Config(object):
+    JOBS = [
+        {
+            'id': 'get_data',
+            'func': 'app:get_data',
+            'trigger': 'cron',
+            'minute': 58,
+            'hour': 11
+        },
+        {
+            'id': 'get_sezioni',
+            'func': 'app:get_sezioni',
+            'trigger': 'cron',
+            'minute': 55,
+            'hour': 11
+        }
+    ]
+
+    SCHEDULER_API_ENABLED = True
+    SQLALCHEMY_DATABASE_URI=config['DATABASE']['SQLALCHEMY_DATABASE_URI'],
+    SQLALCHEMY_TRACK_MODIFICATIONS=config['DATABASE']['SQLALCHEMY_TRACK_MODIFICATIONS'],
+    SCHEDULER_API_ENABLED = True
+
 class GeneralError(Exception):
     status_code = 400
 
@@ -53,7 +76,6 @@ class GeneralError(Exception):
         rv['message'] = self.message
         return rv
 
-@sched.task('cron', id='get_data', week='*', minute=30, hour=0)
 def get_data():
     print("Get data {}".format(datetime.now()))
     inpath = os.path.join(DIRFILE, 'static')
@@ -91,7 +113,6 @@ def get_data():
         time.sleep(int(config['MISC']['overpasstime']))
     return True
 
-@sched.task('cron', id='get_sezioni', week='*', minute=1, hour=0)
 def get_sezioni():
     print("Get sezioni {}".format(datetime.now()))
     cosr = CaiOsmSourceRef()
@@ -102,11 +123,8 @@ def get_sezioni():
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    app.config.from_mapping(
-        SQLALCHEMY_DATABASE_URI=config['DATABASE']['SQLALCHEMY_DATABASE_URI'],
-        SQLALCHEMY_TRACK_MODIFICATIONS=config['DATABASE']['SQLALCHEMY_TRACK_MODIFICATIONS'],
-        SCHEDULER_API_ENABLED = True
-    )
+    app.config.from_object(Config())
+
     db.app = app
     db.init_app(app)
 
