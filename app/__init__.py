@@ -103,6 +103,16 @@ def get_data():
             cod.write(os.path.join(inpath, 'regions',
                                    "{}.json".format(regslug)),
                       'tags')
+        elif not os.path.exists(gjsfile):
+            cod = CaiOsmRoute(area=reg)
+            cod.get_cairoutehandler()
+            cod.write(gjsfile, 'geojson')
+            jsobj = json.load(open(gjsfile))
+            cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
+            cor.write_book(regslug, pdf=True)
+            cod.write(os.path.join(inpath, 'regions',
+                                   "{}.json".format(regslug)),
+                      'tags')
         else:
             print("{} has NO changes".format(reg))
             if not os.path.exists(os.path.join(MEDIADIR,
