@@ -9,7 +9,6 @@ import os
 import json
 import geojson
 import urllib.request
-from urllib.error import HTTPError
 import tempfile
 import time
 from datetime import date
@@ -64,10 +63,12 @@ class CaiOsmBase:
         req = urllib.request.Request(self.url, data)
         try:
             resp = urllib.request.urlopen(req)
-        except HTTPError as e:
+        except Exception as e:
             if e.code == 429:
-                 time.sleep(240);
-                 self._get_data(instr)
+                if self.debug:
+                    print("Aspetto 240 s")
+                time.sleep(240);
+                self._get_data(instr)
             raise
         respData = resp.read()
         return respData.decode(encoding='utf-8', errors='ignore')
