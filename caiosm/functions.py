@@ -205,7 +205,9 @@ def send_mail(sub, mess, to=None, cc=None, bcc=None, attach=None, path=None,
     password = config['EMAIL']['password']
     host = config['EMAIL']['host']
     port = config['EMAIL']['port']
-
+    account = config['EMAIL']['account']
+    if not account:
+        account = email
     msg = MIMEMultipart()
     msg['From'] = email
     toaddr = []
@@ -236,7 +238,7 @@ def send_mail(sub, mess, to=None, cc=None, bcc=None, attach=None, path=None,
     server = smtplib.SMTP(host, port)
     if tls:
         server.starttls()
-    server.login(email, password)
+    server.login(account, password)
     text = msg.as_string()
     try:
         server.sendmail(email, toaddr, text)
