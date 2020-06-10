@@ -88,7 +88,8 @@ class CaiOsmReport:
                       '-dNOPAUSE -dQUIET -dBATCH -sOutputFile="{ofile}" ' \
                       '"{ifile}"'.format(ifile=ori, ofile=opti)
                 _run_cmd(cmd)
-                os.remove(ori)
+                if os.path.exists(ori):
+                    os.remove(ori)
                 shutil.move(opti, ori)
             else:
                raise Exception("gs not found. Please install Ghostscript to "
