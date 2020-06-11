@@ -201,12 +201,19 @@ class CaiOsmReport:
         # convert to PDF
         if pdf:
             self._create_pdf(output)
-        if remove:
+        if pdf and remove:
+            # remove tex file for each single hiking path
             for ref in outfiles:
                 try:
                     os.remove(ref)
                     os.remove(ref.replace('.tex', '.aux'))
-                    os.remove(ref.replace('.tex', '.png'))
+                    os.remove(ref.replace('.tex', '.log'))
                 except FileNotFoundError:
                     pass
+            # remove all images
+            all_files = os.listdir('.')
+            png_files = [file for file in all_files if file.endswith(".png")]
+            for file in png_files:
+                	os.remove(path_to_file)
+
         return True
