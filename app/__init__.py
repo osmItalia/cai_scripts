@@ -44,15 +44,15 @@ class Config(object):
             'id': 'get_data',
             'func': 'app:get_data',
             'trigger': 'cron',
-            'minute': 58,
-            'hour': 11
+            'minute': 10,
+            'hour': 00
         },
         {
             'id': 'get_sezioni',
             'func': 'app:get_sezioni',
             'trigger': 'cron',
-            'minute': 55,
-            'hour': 11
+            'minute': 01,
+            'hour': 00
         }
     ]
 
