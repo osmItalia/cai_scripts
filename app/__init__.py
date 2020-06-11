@@ -76,11 +76,33 @@ class GeneralError(Exception):
         rv['message'] = self.message
         return rv
 
+def update(reg, inpath):
+    regslug = slugify(reg)
+    gjsfile = os.path.join(inpath, 'regions', "{}.geojson".format(regslug))
+    cod = CaiOsmRoute(area=reg)
+    cod.get_cairoutehandler()
+    cod.write(gjsfile, 'geojson')
+    jsobj = json.load(open(gjsfile))
+    starttime = int(time.time())
+    cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
+    cor.write_book(regslug, pdf=True)
+    cod.write(os.path.join(inpath, 'regions',
+                           "{}.json".format(regslug)),
+              'tags')
+    endtime = int(time.time())
+    difftime = endtime-starttime
+    if difftime > 420:
+        return True
+    else:
+        return False
+
 def get_data():
     print("Get data {}".format(datetime.now()))
     inpath = os.path.join(DIRFILE, 'static')
     regions = get_regions_from_geojson(os.path.join(inpath, 'data',
                                                     'italy.geojson'))
+
+
     for reg in regions:
         regslug = slugify(reg)
         gjsfile = os.path.join(inpath, 'regions', "{}.geojson".format(regslug))
@@ -94,25 +116,9 @@ def get_data():
             mc.telegram(token=config['TELEGRAM']['token'],
                         chatid=config['TELEGRAM']['chatid'])
             time.sleep(int(config['MISC']['overpasstime'])/2)
-            cod = CaiOsmRoute(area=reg)
-            cod.get_cairoutehandler()
-            cod.write(gjsfile, 'geojson')
-            jsobj = json.load(open(gjsfile))
-            cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
-            cor.write_book(regslug, pdf=True)
-            cod.write(os.path.join(inpath, 'regions',
-                                   "{}.json".format(regslug)),
-                      'tags')
+            skiptime = update(reg, inpath)
         elif not os.path.exists(gjsfile):
-            cod = CaiOsmRoute(area=reg)
-            cod.get_cairoutehandler()
-            cod.write(gjsfile, 'geojson')
-            jsobj = json.load(open(gjsfile))
-            cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
-            cor.write_book(regslug, pdf=True)
-            cod.write(os.path.join(inpath, 'regions',
-                                   "{}.json".format(regslug)),
-                      'tags')
+            skiptime = update(reg, inpath)
         else:
             print("{} has NO changes".format(reg))
             if not os.path.exists(os.path.join(MEDIADIR,
@@ -120,7 +126,9 @@ def get_data():
                 jsobj = json.load(open(gjsfile))
                 cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
                 cor.write_book(regslug, pdf=True)
-        time.sleep(int(config['MISC']['overpasstime']))
+            skiptime = False
+        if not skiptime:
+            time.sleep(int(config['MISC']['overpasstime']))
     return True
 
 def get_sezioni():
