@@ -319,3 +319,9 @@ def make_safe_filename(s):
         else:
             return "_"
     return "".join(safe_char(c) for c in s).rstrip("_")
+
+def utf8len(s):
+    """Function to get byte lenght for a string
+    https://stackoverflow.com/questions/30686701/python-get-size-of-string-in-bytes
+    """
+    return len(s.encode('utf-8'))
