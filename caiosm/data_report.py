@@ -107,7 +107,7 @@ class CaiOsmTable:
 class CaiOsmHistory:
     """Return data about the history of data"""
     def __init__(self, startdate, enddate, deltatime, regions=REGIONI.keys(),
-                 sleep=60):
+                 sleep=60, debug=False):
         """Initialize function
         :param str startdate: the starting date in format YYYY-MM-DD
         :param str enddate: a ending date in format YYYY-MM-DD
@@ -115,8 +115,10 @@ class CaiOsmHistory:
                               "2 months", "6 months", "1 year"
         :param list regions: a list of region to process, by default it
                              execute for all Italian regions
+        :param bool debug: print debug information
         """
         self.regions = regions
+        self.debug = debug
         self.startdate = datetime.strptime(startdate, '%Y-%m-%d')
         self.enddate = datetime.strptime(enddate, '%Y-%m-%d')
         thisdelta = delta(deltatime)
@@ -138,6 +140,8 @@ class CaiOsmHistory:
                 newyear = time.year + thisdelta[0]
                 time = time.replace(year=newyear)
             self.times.append(time)
+        if self.debug:
+            print(self.times)
         self.sleep = sleep
 
     def reg_history(self, region):
@@ -148,7 +152,7 @@ class CaiOsmHistory:
         output = {}
         for y in self.times:
             data = y.strftime('%Y-%m-%d')
-            cord = CaiOsmRouteDate(startdate=y, area=region)
+            cord = CaiOsmRouteDate(startdate=y, area=region, self.debug)
             cord.get_cairoutehandler()
             output[data] = [cord.cch.count, cord.get_length(unit='km')]
             sleep(self.sleep)
