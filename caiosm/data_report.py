@@ -156,6 +156,8 @@ class CaiOsmHistory:
             cord.get_cairoutehandler()
             output[data] = [cord.cch.count, cord.get_length(unit='km')]
             sleep(self.sleep)
+        if self.debug:
+            print(output)
         return output
 
     def italy_history(self):
@@ -208,6 +210,8 @@ class CaiOsmHistory:
             for t in self.times:
                 output += "|{}".format(regdata[t.strftime('%Y-%m-%d')][1])
             output += "\n"
+        if self.debug:
+            print(output)
         if outpath:
             fi = open(outpath, 'w')
             fi.write(output)
