@@ -59,10 +59,12 @@ class CaiOsmBase:
         """
         if self.debug:
             print(instr)
+
         values = {'data': instr}
         data = urllib.parse.urlencode(values)
         data = data.encode('utf-8') # data should be bytes
-        req = urllib.request.Request(self.url, data)
+        req = urllib.request.Request(self.url, data, method='GET')
+        req.add_header('Referer', 'http://www.cai.it')
         try:
             resp = urllib.request.urlopen(req)
         except HTTPError as e:
@@ -747,7 +749,8 @@ class CaiOsmRouteDate(CaiOsmBase):
                                               timeout=timeout,
                                               separator=separator, debug=debug)
 
-        header = '[out:xml][date:"{start}"];'.format(start="{}T00:00:00Z".format(startdate))
+        header = '[timeout:{time}][out:xml][date:"{start}"];'.format(start="{}T00:00:00Z".format(startdate),
+                                                                     time=self.timeout)
         query = header + """{area}
 relation
   ["route"="hiking"]
