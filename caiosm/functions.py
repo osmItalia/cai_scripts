@@ -291,11 +291,11 @@ def split_at_intersection(lines, prefix=None):
     :param list lines: a list of dictionary containing geometri in WKT format
     """
     # get intersection point
-    mp = get_points(lines["features"])
+    mp = get_points(lines)
     x = 0
     output = geojson.FeatureCollection()
     # for each line split it
-    for line in lines["features"]:
+    for line in lines:
         splitlines = split(shape(line['geometry']), mp)
         for sl in splitlines:
             if prefix:
