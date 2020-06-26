@@ -200,7 +200,7 @@ class CaiOsmHistory:
         :param str outpath: the path to the output regions csv file, by default
                             it print the date
         """
-        output = ""
+        output = "region"
         for t in self.times:
             output += "|{}".format(t.strftime('%Y-%m-%d'))
         output += "\n"
