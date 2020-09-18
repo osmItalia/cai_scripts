@@ -419,7 +419,7 @@ class CaiRoutesHandler(osmium.SimpleHandler):
            members as comma separated values
         """
         features = []
-        for feat in self.wjson:
+        for feat in self.wjson['features']:
             osmid = feat['properties']['osm_id_way']
             newid = feat['properties']['IDTrat']
             for w in self.members[osmid]:

@@ -290,10 +290,10 @@ def split_at_intersection(lines, prefix=None):
 
     :param list lines: a list of dictionary containing geometri in WKT format
     """
-    # get intersection point
+    # get intersection
     mp = get_points(lines)
     x = 0
-    output = geojson.FeatureCollection()
+    output = []
     # for each line split it
     for line in lines:
         splitlines = split(shape(line['geometry']), mp)
@@ -307,7 +307,7 @@ def split_at_intersection(lines, prefix=None):
             output.append(geojson.Feature(geometry=mapping(sl), id=idd,
                                           properties=feats))
             x += 1
-    return output
+    return geojson.FeatureCollection(output)
 
 def make_safe_filename(s):
     """Function to clean a variable for file name
