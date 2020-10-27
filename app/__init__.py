@@ -9,7 +9,6 @@ Created on Mon Apr 22 16:28:42 2019
 import os
 import time
 import json
-from datetime import datetime
 import configparser
 from flask import Flask
 from flask import render_template
