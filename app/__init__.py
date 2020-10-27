@@ -17,13 +17,9 @@ from flask import jsonify
 from flask import send_file
 from flask import request
 from slugify import slugify
-from flask_apscheduler import APScheduler
-from caiosm.data_from_overpass import CaiOsmRoute
 from caiosm.data_from_overpass import CaiOsmSourceRef
 from caiosm.data_from_overpass import CaiOsmRouteSourceRef
-from caiosm.data_diff import ManageChanges
 from caiosm.data_print import CaiOsmReport
-from caiosm.functions import get_regions_from_geojson
 from app.model import db
 from app.model import select_users
 from app.model import insert_user
@@ -36,27 +32,7 @@ MEDIADIR = os.path.join(DIRFILE, 'media')
 config = configparser.ConfigParser()
 config.read(os.path.join(DIRFILE, 'cai_scripts.ini'))
 
-sched = APScheduler()
-
 class Config(object):
-    JOBS = [
-        {
-            'id': 'get_data',
-            'func': 'app:get_data',
-            'trigger': 'cron',
-            'minute': 10,
-            'hour': 00
-        },
-        {
-            'id': 'get_sezioni',
-            'func': 'app:get_sezioni',
-            'trigger': 'cron',
-            'minute': 1,
-            'hour': 00
-        }
-    ]
-
-    SCHEDULER_API_ENABLED = True
     SQLALCHEMY_DATABASE_URI=config['DATABASE']['SQLALCHEMY_DATABASE_URI'],
     SQLALCHEMY_TRACK_MODIFICATIONS=config['DATABASE']['SQLALCHEMY_TRACK_MODIFICATIONS'],
 
@@ -75,67 +51,7 @@ class GeneralError(Exception):
         rv['message'] = self.message
         return rv
 
-def update(reg, inpath):
-    regslug = slugify(reg)
-    gjsfile = os.path.join(inpath, 'regions', "{}.geojson".format(regslug))
-    cod = CaiOsmRoute(area=reg)
-    cod.get_cairoutehandler()
-    cod.write(gjsfile, 'geojson')
-    jsobj = json.load(open(gjsfile))
-    starttime = int(time.time())
-    cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
-    cor.write_book(regslug, pdf=True)
-    cod.write(os.path.join(inpath, 'regions',
-                           "{}.json".format(regslug)),
-              'tags')
-    endtime = int(time.time())
-    difftime = endtime-starttime
-    if difftime > 420:
-        return True
-    else:
-        return False
 
-def get_data():
-    print("Get data {}".format(datetime.now()))
-    inpath = os.path.join(DIRFILE, 'static')
-    regions = get_regions_from_geojson(os.path.join(inpath, 'data',
-                                                    'italy.geojson'))
-
-
-    for reg in regions:
-        regslug = slugify(reg)
-        gjsfile = os.path.join(inpath, 'regions', "{}.geojson".format(regslug))
-        mc = ManageChanges(area=reg, path=DIRFILE)
-        if len(mc.changes) > 0:
-            print("{} has changes".format(reg))
-            with db.app.app_context():
-                mails = select_users(regslug)
-            if mails:
-                mc.mail(bccs=mails)
-            mc.telegram(token=config['TELEGRAM']['token'],
-                        chatid=config['TELEGRAM']['chatid'])
-            time.sleep(int(config['MISC']['overpasstime'])/2)
-            skiptime = update(reg, inpath)
-        elif not os.path.exists(gjsfile):
-            skiptime = update(reg, inpath)
-        else:
-            print("{} has NO changes".format(reg))
-            if not os.path.exists(os.path.join(MEDIADIR,
-                                               '{}.pdf'.format(regslug))):
-                jsobj = json.load(open(gjsfile))
-                cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
-                cor.write_book(regslug, pdf=True)
-            skiptime = False
-        if not skiptime:
-            time.sleep(int(config['MISC']['overpasstime']))
-    return True
-
-def get_sezioni():
-    print("Get sezioni {}".format(datetime.now()))
-    cosr = CaiOsmSourceRef()
-    cosr.write(os.path.join(DIRFILE, 'static', 'data', 'cai_osm.csv'),
-               'names')
-    return True
 
 def create_app(test_config=None):
     # create and configure the app
@@ -160,9 +76,6 @@ def create_app(test_config=None):
 
     if not os.path.exists(MEDIADIR):
         os.mkdir(MEDIADIR)
-
-    sched.init_app(app)
-    sched.start()
 
     @app.errorhandler(GeneralError)
     def handle_invalid_usage(error):
