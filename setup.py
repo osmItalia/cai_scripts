@@ -18,6 +18,7 @@ setup(
     author='Luca Delucchi',
     author_email='luca.delucchi@fmach.it',
     license='GPLv3+',
+    package_data={'caiosm': ['data/*']},
     entry_points="""
     [console_scripts]
     caiosm=caiosm.scripts.caiosm:main
