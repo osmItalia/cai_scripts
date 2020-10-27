@@ -51,7 +51,7 @@ class Config(object):
             'id': 'get_sezioni',
             'func': 'app:get_sezioni',
             'trigger': 'cron',
-            'minute': 01,
+            'minute': 1,
             'hour': 00
         }
     ]
@@ -59,7 +59,6 @@ class Config(object):
     SCHEDULER_API_ENABLED = True
     SQLALCHEMY_DATABASE_URI=config['DATABASE']['SQLALCHEMY_DATABASE_URI'],
     SQLALCHEMY_TRACK_MODIFICATIONS=config['DATABASE']['SQLALCHEMY_TRACK_MODIFICATIONS'],
-    SCHEDULER_API_ENABLED = True
 
 class GeneralError(Exception):
     status_code = 400
