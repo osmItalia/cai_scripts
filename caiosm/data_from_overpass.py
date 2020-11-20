@@ -23,12 +23,47 @@ from .osmium_handler import CaiRoutesHandler
 
 DIRFILE = os.path.dirname(os.path.realpath(__file__))
 
+QUERY_HIKING = """
+relation
+  ["route"="hiking"]
+  {netw}
+"""
+
+QUERY_CAISCALE = """
+relation
+  ["route"="hiking"]
+  {netw}
+  ["cai_scale"]
+"""
+
+QUERY_SOURCECAI = """
+relation
+  ["route"="hiking"]
+  {netw}
+  ["source"="CAI"]
+"""
+QUERY_SOURCESURVEYCAI = """
+relation
+  ["route"="hiking"]
+  {netw}
+  ["source"="survey:CAI"]
+"""
+
+
 class CaiOsmBase:
     """Base class to get CAI data using Overpass API"""
 
-    def __init__(self, area=None, bbox=None, bbox_inverted=False,
-                 separator='|', debug=False, timeout=2500,
-                 url="http://overpass-api.de/api/interpreter?"):
+    def __init__(
+        self,
+        area=None,
+        bbox=None,
+        bbox_inverted=False,
+        separator="|",
+        debug=False,
+        timeout=2500,
+        url="http://overpass-api.de/api/interpreter?",
+        querytype="caiscale",
+    ):
         """Inizialize
 
         :param str area: the name of the area of interest
@@ -39,6 +74,11 @@ class CaiOsmBase:
         :param str separator: the separator to use for CSV
         :param bool debug: print debug information
         :param int timeout: the timeout value for overpass
+        :param str url: the url to use
+        :param str querytype: the type to query to use:
+            - hiking: download all hiking routes
+            - caiscale: use the presence of cai_scale tag to filter routes
+            - source: use source=servey:CAI and source=CAI tag to filter routes
         """
         self.area = area
         if bbox_inverted:
@@ -51,6 +91,9 @@ class CaiOsmBase:
         self.debug = debug
         self.cch = None
         self.timeout = timeout
+        if querytype not in ["hiking", "caiscale", "source"]:
+            raise ValueError("Only hiking, caiscale, source values are supported")
+        self.querytype = querytype
 
     def _get_data(self, instr):
         """Private function to obtain the OSM data from overpass api
@@ -60,26 +103,28 @@ class CaiOsmBase:
         if self.debug:
             print(instr)
 
-        values = {'data': instr}
+        values = {"data": instr}
         data = urllib.parse.urlencode(values)
-        data = data.encode('utf-8') # data should be bytes
-        req = urllib.request.Request(self.url, data, method='GET')
-        req.add_header('Referer', 'http://www.cai.it')
+        data = data.encode("utf-8")  # data should be bytes
+        req = urllib.request.Request(self.url, data, method="GET")
+        req.add_header("Referer", "http://www.cai.it")
         try:
             resp = urllib.request.urlopen(req)
         except HTTPError as e:
             if e.code == 429:
                 if self.debug:
                     print("wait {} s".format(360))
-                time.sleep(360);
+                time.sleep(360)
                 self._get_data(instr)
             raise
         respData = resp.read()
-        return respData.decode(encoding='utf-8', errors='ignore')
+        return respData.decode(encoding="utf-8", errors="ignore")
+
 
 class CaiOsmData(CaiOsmBase):
     """Class to get CAI data using Overpass API and convert in different
-       formats"""
+    formats"""
+
     def __init__(self, **kwargs):
         """Inizialize
 
@@ -91,10 +136,15 @@ class CaiOsmData(CaiOsmBase):
         :param str separator: the separator to use for CSV
         :param bool debug: print debug information
         :param int timeout: the timeout value for overpass
+        :param str url: the url to use
+        :param str querytype: the type to query to use:
+            - hiking: download all hiking routes
+            - caiscale: use the presence of cai_scale tag to filter routes
+            - source: use source=servey:CAI and source=CAI tag to filter routes
         """
         super(CaiOsmData, self).__init__(**kwargs)
-    def get_data_csv(self, csvheader=False, tags='::id,"name","ref"',
-                     network='lwn'):
+
+    def get_data_csv(self, csvheader=False, tags='::id,"name","ref"', network="lwn"):
         """Function to return data in CSV format
 
         :param bool csvheader: show or hide the csv header, default hidden
@@ -110,29 +160,36 @@ out;
 """
         network = check_network(network)
         if self.area:
-            instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
-                                csvh=str(self.csvheader).lower(),
-                                sep=self.separator, cols=tags,
-                                query=self.query.format(netw=network,
-                                                        bbox='area.a'),
-                                time=self.timeout)
+            instr = temp.format(
+                area='area["name"="{}"]->.a;'.format(self.area),
+                csvh=str(self.csvheader).lower(),
+                sep=self.separator,
+                cols=tags,
+                query=self.query.format(netw=network, bbox="area.a"),
+                time=self.timeout,
+            )
         elif self.bbox:
-            instr = temp.format(area='', csvh=str(self.csvheader).lower(),
-                                sep=self.separator, cols=tags,
-                                query=self.query.format(netw=network,
-                                                        bbox=self.bbox),
-                                time=self.timeout)
+            instr = temp.format(
+                area="",
+                csvh=str(self.csvheader).lower(),
+                sep=self.separator,
+                cols=tags,
+                query=self.query.format(netw=network, bbox=self.bbox),
+                time=self.timeout,
+            )
         else:
-            instr = temp.format(area='', csvh=str(self.csvheader).lower(),
-                                sep=self.separator, cols=tags,
-                                query=self.query.format(netw=network,
-                                                        bbox=''),
-                                time=self.timeout)
+            instr = temp.format(
+                area="",
+                csvh=str(self.csvheader).lower(),
+                sep=self.separator,
+                cols=tags,
+                query=self.query.format(netw=network, bbox=""),
+                time=self.timeout,
+            )
 
         return self._get_data(instr)
 
-
-    def get_data_osm(self, sort=True, network='lwn', remove=True):
+    def get_data_osm(self, sort=True, network="lwn", remove=True):
         """Function to return data in the original OSM format
 
         :param str network: the network level to query, default 'lwn'
@@ -148,40 +205,45 @@ out;"""
 
         network = check_network(network)
         if self.area:
-            instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
-                                query=self.query.format(netw=network,
-                                                        bbox='area.a'),
-                                time=self.timeout)
+            instr = temp.format(
+                area='area["name"="{}"]->.a;'.format(self.area),
+                query=self.query.format(netw=network, bbox="area.a"),
+                time=self.timeout,
+            )
         elif self.bbox:
-            instr = temp.format(area='', query=self.query.format(netw=network,
-                                                                 bbox=self.bbox),
-                                time=self.timeout)
+            instr = temp.format(
+                area="",
+                query=self.query.format(netw=network, bbox=self.bbox),
+                time=self.timeout,
+            )
         else:
-            instr = temp.format(area='', query=self.query.format(netw=network,
-                                                                 bbox=''),
-                                time=self.timeout)
+            instr = temp.format(
+                area="",
+                query=self.query.format(netw=network, bbox=""),
+                time=self.timeout,
+            )
 
         data = self._get_data(instr)
 
         if sort:
             mir = osmium.MergeInputReader()
-            mir.add_buffer(data.encode('utf-8'), "osm")
+            mir.add_buffer(data.encode("utf-8"), "osm")
             # the code stop here after printing the xml osm data
-            tempname = tempfile.mkstemp(suffix='.osm')[1]
+            tempname = tempfile.mkstemp(suffix=".osm")[1]
 
-            with open(tempname, 'w') as temp_osm:
+            with open(tempname, "w") as temp_osm:
                 os.unlink(temp_osm.name)
                 wh = osmium.WriteHandler(temp_osm.name)
                 mir.apply(wh, idx="flex_mem")
                 wh.close()
                 temp_osm.close()
-            with open(tempname, 'r') as temp_osm:
+            with open(tempname, "r") as temp_osm:
                 data = temp_osm.read()
             if remove:
                 os.remove(tempname)
         return data
 
-    def get_data_json(self, network='lwn'):
+    def get_data_json(self, network="lwn"):
         """Function to return the OSM data in JSON formats
 
         :param str network: the network level to query, default 'lwn'
@@ -196,43 +258,49 @@ out qt;"""
 
         network = check_network(network)
         if self.area:
-            instr = temp.format(area='area["name"="{}"]->.a;'.format(self.area),
-                                query=self.query.format(netw=network,
-                                                        bbox='area.a'),
-                                time=self.timeout)
+            instr = temp.format(
+                area='area["name"="{}"]->.a;'.format(self.area),
+                query=self.query.format(netw=network, bbox="area.a"),
+                time=self.timeout,
+            )
         elif self.bbox:
-            instr = temp.format(area='',query=self.query.format(netw=network,
-                                                                bbox=self.bbox),
-                                time=self.timeout)
+            instr = temp.format(
+                area="",
+                query=self.query.format(netw=network, bbox=self.bbox),
+                time=self.timeout,
+            )
         else:
-            instr = temp.format(area='',query=self.query.format(netw=network,
-                                                                bbox=''),
-                                time=self.timeout)
+            instr = temp.format(
+                area="",
+                query=self.query.format(netw=network, bbox=""),
+                time=self.timeout,
+            )
 
         return json.loads(self._get_data(instr))
 
-
-    def get_tags_json(self, debug=False, network='lwn'):
+    def get_tags_json(self, debug=False, network="lwn"):
         """Function to get the tags plus id for CAI relations
 
         :param str network: the network level to query, default 'lwn'
         """
         data = self.get_data_json(network=network)
         tags = []
-        for elem in data['elements']:
-            #check if the element is a relation
-            if elem['type'] == 'relation':
+        for elem in data["elements"]:
+            # check if the element is a relation
+            if elem["type"] == "relation":
                 # cai_scale used as tag to reconize CAI paths
-                if elem['tags']['type'] == 'route' and 'cai_scale' in elem['tags'].keys():
-                    vals = elem['tags']
-                    vals['id'] = elem['id']
+                if (
+                    elem["tags"]["type"] == "route"
+                    and "cai_scale" in elem["tags"].keys()
+                ):
+                    vals = elem["tags"]
+                    vals["id"] = elem["id"]
                     tags.append(vals)
                     if debug:
                         print(vals)
         return tags
 
-
-    def wiki_table(self, network='lwn'):
+    def wiki_table(self, network="lwn"):
         """Function to convert a CSV file to a wiki table.
         Original code from https://github.com/dlink/vbin/blob/master/csv2wiki
 
@@ -253,23 +321,23 @@ out qt;"""
                 else:
                     row.append(field)
                 x += 1
-            row.extend(['', ''])
+            row.extend(["", ""])
             table.append(row)
         # output wiki format
         out = '{| class="wikitable sortable mw-collapsible mw-collapsed" \n'
-        out += '|-\n'
-        out += '!Ref\n!Nome\n!Link route\n!%completamento\n!note\n'
+        out += "|-\n"
+        out += "!Ref\n!Nome\n!Link route\n!%completamento\n!note\n"
         i = 0
         for row in sorted(table, key=lambda row: row[0]):
             i += 1
             if i == 1 and self.csvheader:
                 continue
             else:
-                delim = '|'
+                delim = "|"
                 out += "|-\n"
 
-            out += '\n'.join(["%s%s" % (delim, x) for x in row])
-            out += '\n'
+            out += "\n".join(["%s%s" % (delim, x) for x in row])
+            out += "\n"
 
         out += "|-\n|}\n"
         return out
@@ -281,34 +349,36 @@ out qt;"""
         :param str out_format: the required output format
         :param str network: the network level to query, default 'lwn'
         """
-        if out_format == 'csv':
+        if out_format == "csv":
             data = self.get_data_csv(network=network)
-        elif out_format == 'osm':
+        elif out_format == "osm":
             data = self.get_data_osm(network=network)
-        elif out_format == 'wikitable':
+        elif out_format == "wikitable":
             data = self.wiki_table(network=network)
-        elif out_format == 'json':
+        elif out_format == "json":
             data = json.dumps(self.get_data_json(network=network))
-        elif out_format == 'tags':
+        elif out_format == "tags":
             data = json.dumps(self.get_tags_json(network=network))
-        elif out_format == 'geojson':
+        elif out_format == "geojson":
             data = self.get_geojson(network=network)
             if self.cch:
-                self.cch.write_geojson(out, 'route')
+                self.cch.write_geojson(out, "route")
                 return True
             else:
                 data = json.dumps(data)
         else:
-            raise ValueError('Only csv, osm, wikitable, json, tags, geojson '
-                             'format are supported')
-        with open(out, 'w') as fil:
+            raise ValueError(
+                "Only csv, osm, wikitable, json, tags, geojson " "format are supported"
+            )
+        with open(out, "w") as fil:
             fil.write(data)
         return True
 
 
 class CaiOsmRoute(CaiOsmData):
     """Class to get CAI routes using Overpass API and convert in different
-       formats"""
+    formats"""
+
     def __init__(self, **kwargs):
         """Inizialize
 
@@ -320,19 +390,25 @@ class CaiOsmRoute(CaiOsmData):
         :param str separator: the separator to use for CSV
         :param bool debug: print debug information
         :param int timeout: the timeout value for overpass
+        :param str url: the url to use
+        :param str querytype: the type to query to use:
+            - hiking: download all hiking routes
+            - caiscale: use the presence of cai_scale tag to filter routes
+            - source: use source=servey:CAI and source=CAI tag to filter routes
         """
         super(CaiOsmRoute, self).__init__(**kwargs)
         self.cch = None
         self.lenght = None
-        self.query = """
-relation
-  ["route"="hiking"]
-  {netw}
-  ["cai_scale"]
-  ({bbox});
-"""
+        if self.querytype == "caiscale":
+            self.query = QUERY_CAISCALE + "({bbox});"
+        elif self.querytype == "source":
+            self.query = (
+                QUERY_SOURCECAI + "({bbox});" + QUERY_SOURCESURVEYCAI + "({bbox});"
+            )
+        else:
+            self.query = QUERY_HIKING + "({bbox});"
 
-    def get_length(self, network='lwn', unit='km'):
+    def get_length(self, network="lwn", unit="km"):
         """Function to return the total lenght of data
 
         :param str network: the network level to query, default 'lwn'
@@ -344,7 +420,7 @@ relation
         self.lenght = self.cch.length(unit=unit)
         return self.lenght
 
-    def get_cairoutehandler(self, network='lwn', infomont=False):
+    def get_cairoutehandler(self, network="lwn", infomont=False):
         """Function to download osm data and create CaiRoutesHandler instance
 
         :param str network: the network level to query, default 'lwn'
@@ -353,11 +429,11 @@ relation
         self.cch = CaiRoutesHandler(infomont=infomont)
         # trick to solve the problem that overpass data ar not sorted
         mir = osmium.MergeInputReader()
-        mir.add_buffer(data.encode('utf-8'), "osm")
+        mir.add_buffer(data.encode("utf-8"), "osm")
         mir.apply(self.cch, idx="flex_mem", simplify=True)
         return True
 
-    def get_geojson(self, network='lwn'):
+    def get_geojson(self, network="lwn"):
         """Function to get a GeoJSON object
 
         :param str network: the network level to query, default 'lwn'
@@ -371,10 +447,17 @@ relation
 
 class CaiOsmOffice(CaiOsmData):
     """Class to get CAI offices using Overpass API and convert in different
-       formats"""
+    formats"""
 
-    def __init__(self, area='Italia', bbox=None, bbox_inverted=False,
-                 separator='|', debug=False, timeout=2500):
+    def __init__(
+        self,
+        area="Italia",
+        bbox=None,
+        bbox_inverted=False,
+        separator="|",
+        debug=False,
+        timeout=2500,
+    ):
         """Inizialize
 
         :param str area: the name of the area of interest
@@ -386,10 +469,14 @@ class CaiOsmOffice(CaiOsmData):
         :param bool debug: print debug information
         :param int timeout: the timeout value for overpass
         """
-        super(CaiOsmOffice, self).__init__(area=area, bbox=bbox,
-                                           timeout=timeout,
-                                           bbox_inverted=bbox_inverted,
-                                           separator=separator, debug=debug)
+        super(CaiOsmOffice, self).__init__(
+            area=area,
+            bbox=bbox,
+            timeout=timeout,
+            bbox_inverted=bbox_inverted,
+            separator=separator,
+            debug=debug,
+        )
         self.query = """
 (
   node
@@ -419,44 +506,43 @@ class CaiOsmOffice(CaiOsmData):
 );
 """
 
-    def get_geojson(self, network=''):
+    def get_geojson(self, network=""):
         """Function to get a GeoJSON object"""
-        data = self.get_data_json(network='')
+        data = self.get_data_json(network="")
         features = []
         ways = {}
         nodes = {}
         i = 1
-        for elem in data['elements']:
+        for elem in data["elements"]:
             # node is not an office but a point to create a way
-            if elem['type'] == 'node' and 'tags' not in elem.keys():
-                nodes[elem['id']] = elem
+            if elem["type"] == "node" and "tags" not in elem.keys():
+                nodes[elem["id"]] = elem
             # CAI office is mapped as point
-            elif elem['type'] == 'node' and 'tags' in elem.keys():
-                geom = geojson.Point([elem['lon'], elem['lat']])
-                feat = geojson.Feature(id=i, geometry=geom,
-                                       properties=elem['tags'])
+            elif elem["type"] == "node" and "tags" in elem.keys():
+                geom = geojson.Point([elem["lon"], elem["lat"]])
+                feat = geojson.Feature(id=i, geometry=geom, properties=elem["tags"])
                 features.append(feat)
             # CAI office is mapped as way so I need temporary variable
-            elif elem['type'] == 'way' and 'tags' in elem.keys():
-                ways[i] = {'tags': elem['tags'], 'nodes': elem['nodes']}
+            elif elem["type"] == "way" and "tags" in elem.keys():
+                ways[i] = {"tags": elem["tags"], "nodes": elem["nodes"]}
             i += 1
 
         for k, v in ways.items():
             coords = []
-            for n in v['nodes']:
+            for n in v["nodes"]:
                 node = nodes[n]
-                coords.append((node['lon'], node['lat']))
+                coords.append((node["lon"], node["lat"]))
             geom = geojson.LineString(coords)
-            feat = geojson.Feature(id=k, geometry=geom, properties=v['tags'])
+            feat = geojson.Feature(id=k, geometry=geom, properties=v["tags"])
             features.append(feat)
         return geojson.FeatureCollection(features)
+
 
 class CaiOsmSourceRef(CaiOsmData):
     """Class to get CAI source:ref values using Overpass API and convert in
     different formats"""
 
-    def __init__(self, area='Italia', bbox=None, separator='|', debug=False,
-                 timeout=2500):
+    def __init__(self, **kwargs):
         """Inizialize
 
         :param str area: the name of the area of interest
@@ -467,20 +553,25 @@ class CaiOsmSourceRef(CaiOsmData):
         :param str separator: the separator to use for CSV
         :param bool debug: print debug information
         :param int timeout: the timeout value for overpass
+        :param str url: the url to use
+        :param str querytype: the type to query to use:
+            - hiking: download all hiking routes
+            - caiscale: use the presence of cai_scale tag to filter routes
+            - source: use source=servey:CAI and source=CAI tag to filter routes
         """
-        super(CaiOsmSourceRef, self).__init__(area=area, bbox=bbox,
-                                              timeout=timeout,
-                                              separator=separator, debug=debug)
-
-        self.query = """
-relation
-  ["route"="hiking"]
-  {netw}
-  ["cai_scale"]
+        super(CaiOsmSourceRef, self).__init__(**kwargs)
+        source = """
   ["source:ref"]
   ({bbox});
 """
-        self.codespath = os.path.join(DIRFILE, 'data', 'cai_codes.csv')
+        if self.querytype == "caiscale":
+            self.query = QUERY_CAISCALE + source
+        elif self.querytype == "source":
+            self.query = QUERY_SOURCECAI + source + QUERY_SOURCESURVEYCAI + source
+        else:
+            self.query = QUERY_HIKING + source
+
+        self.codespath = os.path.join(DIRFILE, "data", "cai_codes.csv")
         self.osm_codes = None
         self.cai_codes = []
         self.cai_codes_dict = {}
@@ -494,43 +585,50 @@ relation
         """Read the code from the file"""
         with open(self.codespath) as fi:
             cai_lines = fi.readlines()
-        for line in cai_lines :
-            vals = line.split(',')
+        for line in cai_lines:
+            vals = line.split(",")
             self.cai_codes.append(vals)
-            if vals[4] in ['', 'Regione']:
+            if vals[4] in ["", "Regione"]:
                 continue
-            self.cai_codes_dict[vals[0]] = {'name': vals[1], 'city': vals[2],
-                                            'region': vals[4]}
+            self.cai_codes_dict[vals[0]] = {
+                "name": vals[1],
+                "city": vals[2],
+                "region": vals[4],
+            }
             if vals[4] not in self.cai_codes_reg.keys():
                 self.cai_codes_reg[vals[4]] = []
-            self.cai_codes_reg[vals[4]].append({'name': vals[1], 'id': vals[0],
-                                                'city': vals[2]})
+            self.cai_codes_reg[vals[4]].append(
+                {"name": vals[1], "id": vals[0], "city": vals[2]}
+            )
 
-    def download_csv_file(self, url="https://docs.google.com/spreadsheets/d/e/"
-                          "2PACX-1vQWs9ydWZEMGust3TRuJX-HXLTnjAM5TBQ4XiKA_BSb4"
-                          "7cfh70n-5otAOmSoqDzm8GHnFe039xnsqAz/pub?gid=1089220"
-                          "791&single=true&output=csv"):
+    def download_csv_file(
+        self,
+        url="https://docs.google.com/spreadsheets/d/e/"
+        "2PACX-1vQWs9ydWZEMGust3TRuJX-HXLTnjAM5TBQ4XiKA_BSb4"
+        "7cfh70n-5otAOmSoqDzm8GHnFe039xnsqAz/pub?gid=1089220"
+        "791&single=true&output=csv",
+    ):
         """Function to download data into CSV file"""
         req = urllib.request.Request(url)
         resp = urllib.request.urlopen(req)
         respData = resp.read()
-        with open(self.codespath, 'w') as fi:
-         fi.write(respData.decode(encoding='utf-8', errors='ignore'))
+        with open(self.codespath, "w") as fi:
+            fi.write(respData.decode(encoding="utf-8", errors="ignore"))
         self._read_codes()
 
-    def get_list_codes(self, network='lwn'):
+    def get_list_codes(self, network="lwn"):
         """Function to return a list of the CAI codes used in OSM
 
         :param str network: the network level to query, default 'lwn'
         """
         if not self.osm_codes:
-            osm_codes = self.get_data_csv(csvheader=False,
-                                          tags='"source:ref"',
-                                          network=network)
+            osm_codes = self.get_data_csv(
+                csvheader=False, tags='"source:ref"', network=network
+            )
             self.osm_codes = list(set(osm_codes.splitlines()))
         return self.osm_codes
 
-    def get_names_codes(self, network='lwn'):
+    def get_names_codes(self, network="lwn"):
         """Function to return a list of the CAI codes and name used in OSM
 
         :param str network: the network level to query, default 'lwn'
@@ -538,11 +636,16 @@ relation
         output = []
         for osm in self.get_list_codes(network=network):
             if osm in self.cai_codes_dict.keys():
-                output.append([osm, self.cai_codes_dict[osm]['name'],
-                               self.cai_codes_dict[osm]['region']])
+                output.append(
+                    [
+                        osm,
+                        self.cai_codes_dict[osm]["name"],
+                        self.cai_codes_dict[osm]["region"],
+                    ]
+                )
         return output
 
-    def get_codes_region(self, region, network='lwn'):
+    def get_codes_region(self, region, network="lwn"):
         """Return CAI codes for the selected region
 
         :param str region: The region name
@@ -551,11 +654,11 @@ relation
         if region in self.cai_codes_reg.keys():
             return self.cai_codes_reg[region]
         else:
-            if 'VALLE' in region:
+            if "VALLE" in region:
                 return self.cai_codes_reg["VALLE D'AOSTA"]
-            elif 'TRENTINO' in region:
+            elif "TRENTINO" in region:
                 return self.cai_codes_reg["TRENTINO-ALTO ADIGE"]
-            elif 'FRIULI' in region:
+            elif "FRIULI" in region:
                 return self.cai_codes_reg["FRIULI-VENEZIA GIULIA"]
         return "Region '{}' not found".format(region)
 
@@ -566,22 +669,23 @@ relation
         :param str out_format: the required output format
         :param str network: the network level to query, default 'lwn'
         """
-        if out_format == 'codes':
+        if out_format == "codes":
             data = self.get_list_codes(network=network)
-        elif out_format == 'names':
+        elif out_format == "names":
             data = self.get_names_codes(network=network)
         else:
-            raise ValueError('Only codes, names format are supported')
-        with open(out, 'w') as fil:
+            raise ValueError("Only codes, names format are supported")
+        with open(out, "w") as fil:
             for d in data:
                 fil.write("{}\n".format(self.separator.join(d)))
         return True
+
 
 class CaiOsmRouteSourceRef(CaiOsmRoute):
     """Class to get CAI routes for a single CAI group using Overpass API and
     convert in different formats"""
 
-    def __init__(self, sourceref, separator='|', debug=False, timeout=2500):
+    def __init__(self, sourceref, **kwargs):
         """Inizialize
 
         :param str area: the name of the area of interest
@@ -592,26 +696,34 @@ class CaiOsmRouteSourceRef(CaiOsmRoute):
         :param str separator: the separator to use for CSV
         :param bool debug: print debug information
         :param int timeout: the timeout value for overpass
+        :param str url: the url to use
+        :param str querytype: the type to query to use:
+            - hiking: download all hiking routes
+            - caiscale: use the presence of cai_scale tag to filter routes
+            - source: use source=servey:CAI and source=CAI tag to filter routes
         """
-        super(CaiOsmRouteSourceRef, self).__init__(separator=separator,
-                                                   timeout=timeout,
-                                                   debug=debug)
-        source = '["source:ref"="{code}"]'.format(code=sourceref)
-        query = """
-relation
-  ["route"="hiking"]
-  {netw}
-  ["cai_scale"]
-"""
-        self.query = query + source + """;"""
+        super(CaiOsmRouteSourceRef, self).__init__(**kwargs)
+        source = '["source:ref"="{code}"];'.format(code=sourceref)
+
+        if self.area:
+            print("Area {} will not be used".format(self.area))
+        if self.bbox:
+            print("The bounding box will not be used")
+        if self.querytype == "caiscale":
+            self.query = QUERY_CAISCALE + source
+        elif self.querytype == "source":
+            self.query = QUERY_SOURCECAI + source + QUERY_SOURCESURVEYCAI + source
+        else:
+            self.query = QUERY_HIKING + source
+
 
 class CaiOsmRouteDiff(CaiOsmBase):
     """Class to get CAI route diff using Overpass API and convert in different
-       formats"""
+    formats"""
 
-    def __init__(self, startdate=None, enddate=None, daydiff=1, area=None,
-                 bbox=None, sourceref=None, separator='|', debug=False,
-                 timeout=2500):
+    def __init__(
+        self, startdate=None, enddate=None, daydiff=1, sourceref=None, **kwargs
+    ):
         """Inizialize
 
         :param str area: the name of the area of interest
@@ -622,10 +734,13 @@ class CaiOsmRouteDiff(CaiOsmBase):
         :param str separator: the separator to use for CSV
         :param bool debug: print debug information
         :param int timeout: the timeout value for overpass
+        :param str url: the url to use
+        :param str querytype: the type to query to use:
+            - hiking: download all hiking routes
+            - caiscale: use the presence of cai_scale tag to filter routes
+            - source: use source=servey:CAI and source=CAI tag to filter routes
         """
-        super(CaiOsmRouteDiff, self).__init__(area=area, bbox=bbox,
-                                              timeout=timeout,
-                                              separator=separator, debug=debug)
+        super(CaiOsmRouteDiff, self).__init__(**kwargs)
         if not startdate:
             yesterday = date.today() - timedelta(daydiff)
             startdate = "{}T00:00:00Z".format(yesterday.isoformat())
@@ -633,25 +748,31 @@ class CaiOsmRouteDiff(CaiOsmBase):
         if not enddate:
             enddate = "{}T00:00:00Z".format(date.today().isoformat())
         self.enddate = dateutil.parser.parse(enddate)
-        header = '[out:xml][adiff:"{start}","{end}"];'.format(start=self.startdate,
-                                                              end=self.enddate)
-        query = header + """{area}
-relation
-  ["route"="hiking"]
-  {netw}
-  ["cai_scale"]
-"""
+        header = '[out:xml][adiff:"{start}","{end}"];'.format(
+            start=self.startdate, end=self.enddate
+        )
         if sourceref:
             source = '["source:ref"="{code}"]'.format(code=sourceref)
-            self.query = query + source
+        if self.querytype == "caiscale":
+            self.query = header + "{area}" + QUERY_CAISCALE + source
+        elif self.querytype == "source":
+            self.query = (
+                header
+                + "{area}"
+                + QUERY_SOURCECAI
+                + source
+                + "{area}"
+                + QUERY_SOURCESURVEYCAI
+                + source
+            )
         else:
-            self.query = query
-        if area or bbox:
+            self.query = header + "{area}" + QUERY_HIKING + source
+        if self.area or self.bbox:
             self.query += """({bbox})"""
         self.query += """; (._;>;);out meta geom;"""
         self.osmdata = None
 
-    def get_data_osm(self, network='lwn'):
+    def get_data_osm(self, network="lwn"):
         """Function to return data in the original OSM format
 
         :param str network: the network level to query, default 'lwn'
@@ -659,17 +780,20 @@ relation
 
         network = check_network(network)
         if self.area:
-            instr = self.query.format(area='area["name"="{}"]->.a;'.format(self.area),
-                                      bbox='area.a', netw=network)
+            instr = self.query.format(
+                area='area["name"="{}"]->.a;'.format(self.area),
+                bbox="area.a",
+                netw=network,
+            )
         elif self.bbox:
-            instr = self.query.format(area='', bbox=self.bbox, netw=network)
+            instr = self.query.format(area="", bbox=self.bbox, netw=network)
         else:
-            instr = self.query.format(area='', bbox='', netw=network)
+            instr = self.query.format(area="", bbox="", netw=network)
 
         self.osmdata = self._get_data(instr)
         return self.osmdata
 
-    def get_changeset(self, network='lwn'):
+    def get_changeset(self, network="lwn"):
         """Return the changeset id
 
         :param str network: the network level to query, default 'lwn'
@@ -677,31 +801,31 @@ relation
         if not self.osmdata:
             self.get_data_osm(network=network)
         jsonosm = xmltodict.parse(self.osmdata)
-        if 'action' not in jsonosm['osm'].keys():
+        if "action" not in jsonosm["osm"].keys():
             return []
         output = []
-        for change in jsonosm['osm']['action']:
-            if change['@type'] in ['modify', 'delete']:
-                value = change['new']
-            elif change['@type'] == 'create':
+        for change in jsonosm["osm"]["action"]:
+            if change["@type"] in ["modify", "delete"]:
+                value = change["new"]
+            elif change["@type"] == "create":
                 value = change
 
-            if 'node' in value.keys():
-                data = value['node']
-            elif 'way' in value.keys():
-                data = value['way']
-            elif 'relation' in value.keys():
-                data = value['relation']
+            if "node" in value.keys():
+                data = value["node"]
+            elif "way" in value.keys():
+                data = value["way"]
+            elif "relation" in value.keys():
+                data = value["relation"]
             else:
                 continue
-            changedata = dateutil.parser.parse(data['@timestamp'])
+            changedata = dateutil.parser.parse(data["@timestamp"])
             if self.startdate.date() <= changedata.date() <= self.enddate.date():
-                changeset = data['@changeset']
+                changeset = data["@changeset"]
                 if changeset not in output:
                     output.append(changeset)
         return output
 
-    def get_cairoutehandler(self, network='lwn'):
+    def get_cairoutehandler(self, network="lwn"):
         """Function to download osm data and create CaiRoutesHandler instance
 
         :param str network: the network level to query, default 'lwn'
@@ -709,14 +833,15 @@ relation
         if not self.osmdata:
             self.get_data_osm(network=network)
         import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.osm') as fi:
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".osm") as fi:
             fi.write(self.osmdata)
         self.cch = CaiRoutesHandler()
         self.cch.apply_file(fi.name, locations=True)
         os.remove(fi.name)
         return True
 
-    def get_geojson(self, network='lwn'):
+    def get_geojson(self, network="lwn"):
         """Function to get a GeoJSON object
 
         :param str network: the network level to query, default 'lwn'
@@ -729,11 +854,9 @@ relation
 
 class CaiOsmRouteDate(CaiOsmBase):
     """Class to get CAI route diff using Overpass API and convert in different
-       formats"""
+    formats"""
 
-    def __init__(self, startdate, area=None,
-                 bbox=None, sourceref=None, separator='|', debug=False,
-                 timeout=2500):
+    def __init__(self, startdate, sourceref=None, **kwargs):
         """Inizialize
 
         :param str area: the name of the area of interest
@@ -744,30 +867,40 @@ class CaiOsmRouteDate(CaiOsmBase):
         :param str separator: the separator to use for CSV
         :param bool debug: print debug information
         :param int timeout: the timeout value for overpass
+        :param str url: the url to use
+        :param str querytype: the type to query to use:
+            - hiking: download all hiking routes
+            - caiscale: use the presence of cai_scale tag to filter routes
+            - source: use source=servey:CAI and source=CAI tag to filter routes
         """
-        super(CaiOsmRouteDate, self).__init__(area=area, bbox=bbox,
-                                              timeout=timeout,
-                                              separator=separator, debug=debug)
+        super(CaiOsmRouteDate, self).__init__(**kwargs)
 
-        header = '[timeout:{time}][out:xml][date:"{start}"];'.format(start="{}T00:00:00Z".format(startdate),
-                                                                     time=self.timeout)
-        query = header + """{area}
-relation
-  ["route"="hiking"]
-  {netw}
-  ["cai_scale"]
-"""
+        header = '[timeout:{time}][out:xml][date:"{start}"];'.format(
+            start="{}T00:00:00Z".format(startdate), time=self.timeout
+        )
         if sourceref:
             source = '["source:ref"="{code}"]'.format(code=sourceref)
-            self.query = query + source
+        if self.querytype == "caiscale":
+            self.query = header + "{area}" + QUERY_CAISCALE + source
+        elif self.querytype == "source":
+            self.query = (
+                header
+                + "{area}"
+                + QUERY_SOURCECAI
+                + source
+                + "{area}"
+                + QUERY_SOURCESURVEYCAI
+                + source
+            )
         else:
-            self.query = query
-        if area or bbox:
+            self.query = header + "{area}" + QUERY_HIKING + source
+
+        if self.area or self.bbox:
             self.query += """({bbox})"""
         self.query += """; (._;>;);out meta;"""
         self.lenght = None
 
-    def get_data_osm(self, network='lwn', sort=True, remove=True):
+    def get_data_osm(self, network="lwn", sort=True, remove=True):
         """Function to return data in the original OSM format
 
         :param str network: the network level to query, default 'lwn'
@@ -775,33 +908,36 @@ relation
 
         network = check_network(network)
         if self.area:
-            instr = self.query.format(area='area["name"="{}"]->.a;'.format(self.area),
-                                      bbox='area.a', netw=network)
+            instr = self.query.format(
+                area='area["name"="{}"]->.a;'.format(self.area),
+                bbox="area.a",
+                netw=network,
+            )
         elif self.bbox:
-            instr = self.query.format(area='', bbox=self.bbox, netw=network)
+            instr = self.query.format(area="", bbox=self.bbox, netw=network)
         else:
-            instr = self.query.format(area='', bbox='', netw=network)
+            instr = self.query.format(area="", bbox="", netw=network)
 
         data = self._get_data(instr)
         if sort:
             mir = osmium.MergeInputReader()
-            mir.add_buffer(data.encode('utf-8'), "osm")
+            mir.add_buffer(data.encode("utf-8"), "osm")
             # the code stop here after printing the xml osm data
-            tempname = tempfile.mkstemp(suffix='.osm')[1]
+            tempname = tempfile.mkstemp(suffix=".osm")[1]
 
-            with open(tempname, 'w') as temp_osm:
+            with open(tempname, "w") as temp_osm:
                 os.unlink(temp_osm.name)
                 wh = osmium.WriteHandler(temp_osm.name)
                 mir.apply(wh, idx="flex_mem")
                 wh.close()
                 temp_osm.close()
-            with open(tempname, 'r') as temp_osm:
+            with open(tempname, "r") as temp_osm:
                 data = temp_osm.read()
             if remove:
                 os.remove(tempname)
         return data
 
-    def get_length(self, network='lwn', unit='km'):
+    def get_length(self, network="lwn", unit="km"):
         """Function to return the total lenght of data
 
         :param str network: the network level to query, default 'lwn'
@@ -814,7 +950,7 @@ relation
             self.lenght = 0
         return self.lenght
 
-    def get_cairoutehandler(self, network='lwn', infomont=False):
+    def get_cairoutehandler(self, network="lwn", infomont=False):
         """Function to download osm data and create CaiRoutesHandler instance
 
         :param str network: the network level to query, default 'lwn'
@@ -823,11 +959,11 @@ relation
         self.cch = CaiRoutesHandler(infomont=infomont)
         # trick to solve the problem that overpass data ar not sorted
         mir = osmium.MergeInputReader()
-        mir.add_buffer(data.encode('utf-8'), "osm")
+        mir.add_buffer(data.encode("utf-8"), "osm")
         mir.apply(self.cch, idx="flex_mem", simplify=True)
         return True
 
-    def get_geojson(self, network='lwn'):
+    def get_geojson(self, network="lwn"):
         """Function to get a GeoJSON object
 
         :param str network: the network level to query, default 'lwn'
