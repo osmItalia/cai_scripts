@@ -18,9 +18,10 @@ SINGULAR_GRAN = ["day", "month", "year"]
 PLURAL_GRAN = ["days", "months", "years"]
 SUPPORTED_GRAN = SINGULAR_GRAN + PLURAL_GRAN
 
-BIGFONT = {'fontname': 'Arial', 'size': '24', 'weight': 'bold'}
-NORMALFONT = {'fontname': 'Arial', 'size': '20'}
-SMALLFONT = {'fontname': 'Arial', 'size': '16'}
+BIGFONT = {"fontname": "Arial", "size": "24", "weight": "bold"}
+NORMALFONT = {"fontname": "Arial", "size": "20"}
+SMALLFONT = {"fontname": "Arial", "size": "16"}
+
 
 def delta(gran):
     """Return the value """
@@ -30,7 +31,8 @@ def delta(gran):
     elif unit in SINGULAR_GRAN:
         return (int(output), unit)
     else:
-        print("Supported delta values are: {}".format(', '.join(SUPPORTED_GRAN)))
+        print("Supported delta values are: {}".format(", ".join(SUPPORTED_GRAN)))
+
 
 def plot_one(data, title, outname=None, dpi=300):
     xlabels = sorted(list(data.keys()))
@@ -41,19 +43,19 @@ def plot_one(data, title, outname=None, dpi=300):
         nums.append(data[x][0])
         counts.append(data[x][1])
     fig, ax1 = plt.subplots()
-    ax1col = 'green'
+    ax1col = "green"
     ax1.set_xticks(range(len(xlabels)))
     ax1.set_xticklabels(xlabels)
     ax1.bar(xs, nums, color=ax1col)
-    ax1.tick_params(axis='y', colors=ax1col, labelsize=NORMALFONT['size'])
-    ax1.tick_params(axis='x', labelsize=SMALLFONT['size'])
+    ax1.tick_params(axis="y", colors=ax1col, labelsize=NORMALFONT["size"])
+    ax1.tick_params(axis="x", labelsize=SMALLFONT["size"])
     ax2 = ax1.twinx()
-    ax2col = 'red'
-    ax2.set_ylabel('Chilometri', labelpad=40,  **NORMALFONT, color=ax2col)
+    ax2col = "red"
+    ax2.set_ylabel("Chilometri", labelpad=40, **NORMALFONT, color=ax2col)
     ax2.plot(xs, counts, color=ax2col)
-    ax2.tick_params(axis='y', colors=ax2col, labelsize=NORMALFONT['size'])
-    ax1.set_xlabel('Data', labelpad=40, **NORMALFONT)
-    ax1.set_ylabel('Numero sentieri', labelpad=40,  **NORMALFONT, color=ax1col)
+    ax2.tick_params(axis="y", colors=ax2col, labelsize=NORMALFONT["size"])
+    ax1.set_xlabel("Data", labelpad=40, **NORMALFONT)
+    ax1.set_ylabel("Numero sentieri", labelpad=40, **NORMALFONT, color=ax1col)
     ax1.set_title(title, **BIGFONT)
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.show()
@@ -63,6 +65,7 @@ def plot_one(data, title, outname=None, dpi=300):
     else:
         plt.show()
     return True
+
 
 class CaiOsmTable:
     """Print or write to a file statistics for regions, it calculate number
@@ -76,7 +79,7 @@ class CaiOsmTable:
         """
         self.regions = regions
 
-    def print_region(self, reg, unit='km'):
+    def print_region(self, reg, unit="km"):
         """Return info for each region"""
         cod = CaiOsmRoute(area=reg)
         cod.get_cairoutehandler()
@@ -88,8 +91,10 @@ class CaiOsmTable:
         """Return number of routes and total lenght for each region"""
         for re in self.regions:
             l, c = self.print_region(re)
-            print("{re}: {to} percorsi, lunghezza totale {le} "
-                  "km\n".format(re=re, le=l, to=c))
+            print(
+                "{re}: {to} percorsi, lunghezza totale {le} "
+                "km\n".format(re=re, le=l, to=c)
+            )
             sleep(30)
 
     def write_regions(self, output):
@@ -97,17 +102,28 @@ class CaiOsmTable:
 
         :param str output: the path for output file
         """
-        with open(output, 'w') as fi:
+        with open(output, "w") as fi:
             for re in self.regions:
                 l, c = self.print_region(re)
-                fi.write("{re}: {to} percorsi, lunghezza totale "
-                         "{le} km\n".format(re=re, le=l, to=c))
+                fi.write(
+                    "{re}: {to} percorsi, lunghezza totale "
+                    "{le} km\n".format(re=re, le=l, to=c)
+                )
         return True
+
 
 class CaiOsmHistory:
     """Return data about the history of data"""
-    def __init__(self, startdate, enddate, deltatime, regions=REGIONI.keys(),
-                 sleep=60, debug=False):
+
+    def __init__(
+        self,
+        startdate,
+        enddate,
+        deltatime,
+        regions=REGIONI.keys(),
+        sleep=60,
+        debug=False,
+    ):
         """Initialize function
         :param str startdate: the starting date in format YYYY-MM-DD
         :param str enddate: a ending date in format YYYY-MM-DD
@@ -119,15 +135,15 @@ class CaiOsmHistory:
         """
         self.regions = regions
         self.debug = debug
-        self.startdate = datetime.strptime(startdate, '%Y-%m-%d')
-        self.enddate = datetime.strptime(enddate, '%Y-%m-%d')
+        self.startdate = datetime.strptime(startdate, "%Y-%m-%d")
+        self.enddate = datetime.strptime(enddate, "%Y-%m-%d")
         thisdelta = delta(deltatime)
         self.times = [self.startdate]
         time = self.startdate
         while time <= self.enddate:
-            if thisdelta[1] == 'day':
+            if thisdelta[1] == "day":
                 time = time + timedelta(days=thisdelta[0])
-            elif thisdelta[1] == 'month':
+            elif thisdelta[1] == "month":
                 newmonth = time.month + thisdelta[0]
                 nyear = 0
                 if newmonth > 12:
@@ -136,7 +152,7 @@ class CaiOsmHistory:
                         newmonth = newmonth - 12
                 newyear = time.year + nyear
                 time = time.replace(year=newyear, month=newmonth)
-            elif thisdelta[1] == 'year':
+            elif thisdelta[1] == "year":
                 newyear = time.year + thisdelta[0]
                 time = time.replace(year=newyear)
             self.times.append(time)
@@ -151,10 +167,10 @@ class CaiOsmHistory:
         """
         output = {}
         for y in self.times:
-            data = y.strftime('%Y-%m-%d')
+            data = y.strftime("%Y-%m-%d")
             cord = CaiOsmRouteDate(startdate=y, area=region, debug=self.debug)
             cord.get_cairoutehandler()
-            output[data] = [cord.cch.count, cord.get_length(unit='km')]
+            output[data] = [cord.cch.count, cord.get_length(unit="km")]
             sleep(self.sleep)
         if self.debug:
             print(output)
@@ -162,7 +178,7 @@ class CaiOsmHistory:
 
     def italy_history(self):
         """Return data about the history of CAI path at Italian level"""
-        return self.reg_history('Italia')
+        return self.reg_history("Italia")
 
     def plot_italy(self, outpath=None):
         """Plot data about the history of CAI path at Italian
@@ -171,7 +187,7 @@ class CaiOsmHistory:
                             show the graph in the monitor
         """
         data = self.italy_history()
-        plot_one(data, 'Andamento sentieri CAI in Italia', outpath)
+        plot_one(data, "Andamento sentieri CAI in Italia", outpath)
         return True
 
     def plot_region(self, region, outpath=None):
@@ -182,7 +198,7 @@ class CaiOsmHistory:
                             it show the graph in the monitor
         """
         data = self.reg_history(region)
-        plot_one(data, 'Andamento sentieri CAI in {}'.format(region), outpath)
+        plot_one(data, "Andamento sentieri CAI in {}".format(region), outpath)
         return True
 
     def regions_history(self):
@@ -202,18 +218,18 @@ class CaiOsmHistory:
         """
         output = "region"
         for t in self.times:
-            output += "|{}".format(t.strftime('%Y-%m-%d'))
+            output += "|{}".format(t.strftime("%Y-%m-%d"))
         output += "\n"
         for re in self.regions:
-            output+= "{}".format(re)
+            output += "{}".format(re)
             regdata = self.reg_history(re)
             for t in self.times:
-                output += "|{}".format(regdata[t.strftime('%Y-%m-%d')][1])
+                output += "|{}".format(regdata[t.strftime("%Y-%m-%d")][1])
             output += "\n"
         if self.debug:
             print(output)
         if outpath:
-            fi = open(outpath, 'w')
+            fi = open(outpath, "w")
             fi.write(output)
             fi.close()
         else:

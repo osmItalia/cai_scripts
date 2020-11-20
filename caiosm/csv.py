@@ -9,6 +9,7 @@ Created on Tue Feb 26 00:11:36 2019
 import os
 import pandas as pd
 
+
 class CsvToWikiTable:
     """Class to convert CSV file to wiki tables; the CSV needs an aggregation
     column like the name of the different CAI groups (sezioni) or mountains
@@ -16,7 +17,7 @@ class CsvToWikiTable:
     Good idea is to clean your CSV file with OpenRefine
     """
 
-    def __init__(self, inp, aggr, sep='|'):
+    def __init__(self, inp, aggr, sep="|"):
         """
         :param str inp: the path to the CSV file
         :param str aggr: the name of the column for aggregation
@@ -26,37 +27,37 @@ class CsvToWikiTable:
         self.df = pd.read_csv(self.input, sep=sep)
         self.column = aggr
         self.group = None
-    
+
     def get_group(self):
         """Populate a list with the name of the aggregation group"""
         self.group = self.df[self.column].unique()
-    
+
     def group_table(self, dat, idcol):
         """Write a mediawiki table for singular aggregated values
-        
+
         :param dat:
         :param str idcol: the column with routes id
         """
         if type(dat) == str:
             dat = self.df.loc[self.df[self.column] == dat]
         out = '{| class="wikitable sortable mw-collapsible mw-collapsed" \n'
-        out += '|-\n'
-        out += '!Ref\n!Nome\n!Link route\n!%Completamento\n!Note\n'
+        out += "|-\n"
+        out += "!Ref\n!Nome\n!Link route\n!%Completamento\n!Note\n"
         for k, v in dat.iterrows():
-            out += '|-\n'
+            out += "|-\n"
             try:
                 cod = str(int(float(v.get(idcol))))
             except:
                 cod = str(v.get(idcol))
             if cod:
                 # could be done better, but format is easting {}
-                out += '| ' + cod + ' || || || {{Progress|0}} || \n'
-        out += '|-\n|}\n'
+                out += "| " + cod + " || || || {{Progress|0}} || \n"
+        out += "|-\n|}\n"
         return out
-        
+
     def groups_table(self, idcol, outdir=None, suffix=None):
         """Write a mediawiki table for all sezioni
-        
+
         :param str idcol: the column with routes id
         :param str outdir: the path to output files, the default None value
                            print the text instead to save in a file
@@ -71,15 +72,15 @@ class CsvToWikiTable:
             if not outdir:
                 print(text)
             else:
-                outname = '{}.txt'.format(sez)
+                outname = "{}.txt".format(sez)
                 if suffix:
                     vals = dat[suffix].value_counts().sort_values()
                     if len(vals) > 0:
                         print(vals)
-                        outname = '{pr}_{pa}'.format(pr=vals.argmax(), pa=outname)
+                        outname = "{pr}_{pa}".format(pr=vals.argmax(), pa=outname)
                     else:
                         continue
                 outpath = os.path.join(outdir, outname)
-                with open(outpath, 'w') as fil:
+                with open(outpath, "w") as fil:
                     fil.write(text)
         return True
