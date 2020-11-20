@@ -2,6 +2,58 @@ caiosm make download, convert, analize, print and show **Club Alpino Italiano (C
 
 To get more info about the collaboration between CAI and OSM read https://wiki.openstreetmap.org/wiki/CAI
 
+How to install
+==============
+
+From source
+------------
+
+Download the source code from Github (you need git command for this)
+
+.. code-block:: bash
+
+   git clone https://github.com/osmItalia/cai_scripts.git
+
+Now you need to install all packages needed by caiosm Python requirements
+
+  * gcc compiler (on Debian and derivates I suggest to install build-essential)
+  * python3 and its development packages
+  * virtualenv
+  * proj (and its development packages)
+  * geos (and its development packages)
+  * PostgreSQL library development
+
+On Debian and derivates you can use the following `apt` command
+
+.. code-block:: bash
+
+   apt install build-essential virtualenv python3-dev libgeos-dev libproj-dev proj-bin libgeos-c1v5 libpq-dev
+
+Now it is the time to create a virtual Python environment and install caiosm dependencies
+
+.. code-block:: bash
+
+   # enter in cai_scrips directory
+   cd cai_scripts
+
+   # create virtual environment
+   virtualenv -p python3 venv
+
+   # activate the virtual environment
+   source venv/bin/activate
+
+   # install numpy
+   pip install numpy
+
+   # install CAIOSM dependencies
+   pip install -r requirements.txt
+
+   # if previous command run correctly now you can install caiosm
+   python setup.py install
+
+   # now you can test caiosm installation
+   caiosm --help
+
 How to use
 ==========
 
