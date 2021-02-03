@@ -118,10 +118,10 @@ class CaiOsmHistory:
     def __init__(
         self,
         startdate,
-        enddate,
-        deltatime,
+        enddate=None,
+        deltatime=None,
         regions=REGIONI.keys(),
-        sleep=60,
+        sleep=5,
         debug=False,
     ):
         """Initialize function
@@ -131,34 +131,39 @@ class CaiOsmHistory:
                               "2 months", "6 months", "1 year"
         :param list regions: a list of region to process, by default it
                              execute for all Italian regions
+        :param list sleep: minute to wait between two overpass query
         :param bool debug: print debug information
         """
         self.regions = regions
         self.debug = debug
         self.startdate = datetime.strptime(startdate, "%Y-%m-%d")
-        self.enddate = datetime.strptime(enddate, "%Y-%m-%d")
-        thisdelta = delta(deltatime)
         self.times = [self.startdate]
-        time = self.startdate
-        while time <= self.enddate:
-            if thisdelta[1] == "day":
-                time = time + timedelta(days=thisdelta[0])
-            elif thisdelta[1] == "month":
-                newmonth = time.month + thisdelta[0]
-                nyear = 0
-                if newmonth > 12:
-                    while newmonth > 12:
-                        nyear += 1
-                        newmonth = newmonth - 12
-                newyear = time.year + nyear
-                time = time.replace(year=newyear, month=newmonth)
-            elif thisdelta[1] == "year":
-                newyear = time.year + thisdelta[0]
-                time = time.replace(year=newyear)
-            self.times.append(time)
+        if enddate:
+            self.enddate = datetime.strptime(enddate, "%Y-%m-%d")
+            if deltatime:
+                thisdelta = delta(deltatime)
+            else:
+                raise Exception("deltatime parameter è required with enddate")
+            time = self.startdate
+            while time <= self.enddate:
+                if thisdelta[1] == "day":
+                    time = time + timedelta(days=thisdelta[0])
+                elif thisdelta[1] == "month":
+                    newmonth = time.month + thisdelta[0]
+                    nyear = 0
+                    if newmonth > 12:
+                        while newmonth > 12:
+                            nyear += 1
+                            newmonth = newmonth - 12
+                    newyear = time.year + nyear
+                    time = time.replace(year=newyear, month=newmonth)
+                elif thisdelta[1] == "year":
+                    newyear = time.year + thisdelta[0]
+                    time = time.replace(year=newyear)
+                self.times.append(time)
         if self.debug:
             print(self.times)
-        self.sleep = sleep
+        self.sleep = sleep * 60
 
     def reg_history(self, region):
         """Return data about the history of CAI path for a region
