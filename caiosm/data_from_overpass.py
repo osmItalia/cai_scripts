@@ -881,7 +881,7 @@ class CaiOsmRouteDate(CaiOsmBase):
         if sourceref:
             source = '["source:ref"="{code}"]'.format(code=sourceref)
         if self.querytype == "caiscale":
-            self.query = header + "{area}" + QUERY_CAISCALE + source
+            self.query = header + "{area}" + QUERY_CAISCALE
         elif self.querytype == "source":
             self.query = (
                 header
@@ -893,7 +893,7 @@ class CaiOsmRouteDate(CaiOsmBase):
                 + source
             )
         else:
-            self.query = header + "{area}" + QUERY_HIKING + source
+            self.query = header + "{area}" + QUERY_HIKING
 
         if self.area or self.bbox:
             self.query += """({bbox})"""
