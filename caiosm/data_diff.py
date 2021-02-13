@@ -46,8 +46,10 @@ class ManageChanges:
         self.path = path
         if self.path:
             self.config.read(os.path.join(self.path, "cai_scripts.ini"))
-        else:
-            self.config.read(os.path.join(os.path.expanduser("~"), "cai_scripts.ini"))
+        elif os.path.exists(os.path.join(os.path.expanduser("~"),
+                                         "cai_scripts.ini")):
+            self.config.read(os.path.join(os.path.expanduser("~"),
+                                          "cai_scripts.ini"))
 
     def _set_text(self):
         """Prepare text for message"""
