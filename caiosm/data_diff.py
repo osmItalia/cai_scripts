@@ -27,7 +27,7 @@ class ManageChanges:
         params str sourceref: sezione code
         """
         if sourceref and area:
-            print("Please select only 'area' or 'sourceref'")
+            raise ValueError("Please select only 'area' or 'sourceref'")
         if sourceref:
             self.cord = CaiOsmRouteDiff(
                 sourceref=sourceref, enddate=enddate, startdate=startdate
@@ -36,6 +36,8 @@ class ManageChanges:
         elif area:
             self.cord = CaiOsmRouteDiff(area=area, startdate=startdate, enddate=enddate)
             self.title = "Aggiornamento dati per {}\n\n".format(area)
+        else:
+            raise ValueError("Please select one between 'area' or 'sourceref'")
         self.changes = self.cord.get_changeset()
         if not self.changes:
             return None
