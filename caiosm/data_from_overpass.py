@@ -751,6 +751,7 @@ class CaiOsmRouteDiff(CaiOsmBase):
         header = '[out:xml][adiff:"{start}","{end}"];'.format(
             start=self.startdate, end=self.enddate
         )
+        source = ''
         if sourceref:
             source = '["source:ref"="{code}"]'.format(code=sourceref)
         if self.querytype == "caiscale":
