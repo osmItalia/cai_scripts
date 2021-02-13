@@ -11,7 +11,6 @@ import argparse
 import shutil
 import faulthandler
 import configparser
-from datetime import datetime
 from caiosm.data_from_overpass import CaiOsmRoute
 from caiosm.data_from_overpass import CaiOsmOffice
 from caiosm.data_from_overpass import CaiOsmSourceRef
@@ -19,71 +18,27 @@ from caiosm.data_print import CaiOsmReport
 from caiosm.infomont import CaiOsmInfomont
 from caiosm.functions import REGIONI
 from caiosm.functions import make_safe_filename
+from caiosm.data_diff import ManageChanges
 
+def get_updates(config):
 
-def update(reg, inpath):
-    regslug = slugify(reg)
-    gjsfile = os.path.join(inpath, "regions", "{}.geojson".format(regslug))
-    cod = CaiOsmRoute(area=reg)
-    cod.get_cairoutehandler()
-    cod.write(gjsfile, "geojson")
-    jsobj = json.load(open(gjsfile))
-    starttime = int(time.time())
-    cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
-    cor.write_book(regslug, pdf=True)
-    cod.write(os.path.join(inpath, "regions", "{}.json".format(regslug)), "tags")
-    endtime = int(time.time())
-    difftime = endtime - starttime
-    if difftime > 480:
-        return True
-    else:
-        return False
-
-
-def get_sezioni(inpath):
-    print("Get sezioni {}".format(datetime.now()))
-    cosr = CaiOsmSourceRef()
-    cosr.write(os.path.join(inpath, "data", "cai_osm.csv"), "names")
-    return True
-
-
-def get_data(config):
-    print("Get data {}".format(datetime.now()))
-    DIRFILE = config["MISC"]["appdir"]
-    MEDIADIR = os.path.join(DIRFILE, "media")
-    inpath = os.path.join(DIRFILE, "static")
-    import pdb
-
-    pdb.set_trace()
-    get_sezioni(inpath)
-    time.sleep(int(config["MISC"]["overpasstime"]) / 2)
-    regions = get_regions_from_geojson(os.path.join(inpath, "data", "italy.geojson"))
-    for reg in regions:
-        regslug = slugify(reg)
-        gjsfile = os.path.join(inpath, "regions", "{}.geojson".format(regslug))
-        mc = ManageChanges(area=reg, path=DIRFILE)
+    for reg in REGIONI:
+        mc = ManageChanges(area=reg)
         if len(mc.changes) > 0:
-            print("{} has changes".format(reg))
-            with db.app.app_context():
-                mails = select_users(regslug)
+            print("**{} has changes**".format(reg))
+            # TODO find a way to store mail for region
+            #with db.app.app_context():
+            #    mails = select_users(regslug)
+            mails = None
+
             if mails:
                 mc.mail(bccs=mails)
             mc.telegram(
                 token=config["TELEGRAM"]["token"], chatid=config["TELEGRAM"]["chatid"]
             )
-            time.sleep(int(config["MISC"]["overpasstime"]) / 2)
-            skiptime = update(reg, inpath)
-        elif not os.path.exists(gjsfile):
-            skiptime = update(reg, inpath)
         else:
-            print("{} has NO changes".format(reg))
-            if not os.path.exists(os.path.join(MEDIADIR, "{}.pdf".format(regslug))):
-                jsobj = json.load(open(gjsfile))
-                cor = CaiOsmReport(jsobj, geo=True, output_dir=MEDIADIR)
-                cor.write_book(regslug, pdf=True)
-            skiptime = False
-        if not skiptime:
-            time.sleep(int(config["MISC"]["overpasstime"]))
+            print("--{} has no changes--".format(reg))
+        time.sleep(int(config["MISC"]["overpasstime"]))
     return True
 
 
@@ -112,7 +67,7 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        help="The config file, required" " by updateapp subcommand",
+        help="The config file, required by updates subcommand",
         dest="config",
     )
     parser.add_argument("--debug", dest="debug", action="store_true", help="set debug")
@@ -244,13 +199,15 @@ def main():
         "-G", dest="geojsonwrite", help="name for a GeoJSON file with CAI offices"
     )
     parser_app = subparsers.add_parser(
-        "updateapp", help="Update CAI routes " " for the web app"
+        "updates", help="Get daily CAI routes updates for each italian region"
     )
-    parser_app.set_defaults(func="updateapp")
+    parser_app.set_defaults(func="updates")
     args = parser.parse_args()
 
     if not args.place and not args.box:
         if args.func == "infomont" and args.regs:
+            pass
+        elif args.func == "updates":
             pass
         else:
             raise ValueError("one between --place or --box options is required")
@@ -352,13 +309,13 @@ def main():
                 create_infomont(inarea, inbox, args, prefix)
             except:
                 raise ValueError("Error creating infomont data")
-    elif args.func == "updateapp":
+    elif args.func == "updates":
         if config is None:
             raise ValueError("--config option is required")
         print(
             "WARNING: process take long time, please run it in"
             " a screen session or cronjob"
         )
-        get_data(config)
+        get_updates(config)
     else:
         parser.print_help()
