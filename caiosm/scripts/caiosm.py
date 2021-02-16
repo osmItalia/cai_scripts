@@ -19,9 +19,9 @@ from caiosm.infomont import CaiOsmInfomont
 from caiosm.functions import REGIONI
 from caiosm.functions import make_safe_filename
 from caiosm.data_diff import ManageChanges
+from caiosm.data_report import CaiOsmHistory
 
 def get_updates(config):
-
     for reg in REGIONI:
         mc = ManageChanges(area=reg)
         if len(mc.changes) > 0:
@@ -202,12 +202,22 @@ def main():
         "updates", help="Get daily CAI routes updates for each italian region"
     )
     parser_app.set_defaults(func="updates")
+    parser_stas = subparsers.add_parser("stats",
+                                        help="Get Italian regional statistics"
+    )
+    parser_stas.set_defaults(func="stats")
+    parser_stas.add_argument("-s", "--start", dest="start", required=True,
+                             help="Starting date for statistics")
+    parser_stas.add_argument("-e", "--end", dest="end",
+                             help="End date for statistics")
+    parser_stas.add_argument("-d", dest="delta",
+                             help="Granule for statistics")
     args = parser.parse_args()
 
     if not args.place and not args.box:
         if args.func == "infomont" and args.regs:
             pass
-        elif args.func == "updates":
+        elif args.func in ["updates", "stats"]:
             pass
         else:
             raise ValueError("one between --place or --box options is required")
@@ -317,5 +327,15 @@ def main():
             " a screen session or cronjob"
         )
         get_updates(config)
+    elif args.func == "stats":
+        if config is None:
+            raise ValueError("--config option is required")
+        coh = CaiOsmHistory(args.start, args.end, args.delta,
+                            sleep=int(config["MISC"]["overpasstime"]))
+        print(
+            "WARNING: process take long time, please run it in"
+            " a screen session or cronjob"
+        )
+        coh.regions_csv()
     else:
         parser.print_help()
