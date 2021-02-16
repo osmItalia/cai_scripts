@@ -121,7 +121,7 @@ class CaiOsmHistory:
         enddate=None,
         deltatime=None,
         regions=REGIONI.keys(),
-        sleep=5,
+        sleep=300,
         debug=False,
     ):
         """Initialize function
@@ -131,7 +131,7 @@ class CaiOsmHistory:
                               "2 months", "6 months", "1 year"
         :param list regions: a list of region to process, by default it
                              execute for all Italian regions
-        :param list sleep: minute to wait between two overpass query
+        :param list sleep: seconds to wait between two overpass query
         :param bool debug: print debug information
         """
         self.regions = regions
@@ -163,7 +163,7 @@ class CaiOsmHistory:
                 self.times.append(time)
         if self.debug:
             print(self.times)
-        self.sleep = sleep * 60
+        self.sleep = sleep
 
     def reg_history(self, region):
         """Return data about the history of CAI path for a region
