@@ -116,6 +116,13 @@ Convert Infomont
     # check the result in the /tmp/elba directory
     caiosm --place "Isola d'Elba" infomont -o /tmp/elba
 
+Send updates
+^^^^^^^^^^^^
+
+.. code-block:: bash
+    
+    # send updates for all the Italian Regions
+    caiosm --config ~/cai_scripts.ini updates
 
 Library
 -------
