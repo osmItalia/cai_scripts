@@ -9,9 +9,9 @@ import os
 import json
 import geojson
 import urllib.request
-from urllib.error import HTTPError
 import tempfile
 import time
+import collections
 from datetime import date
 from datetime import timedelta
 import dateutil.parser
@@ -110,7 +110,7 @@ class CaiOsmBase:
         req.add_header("Referer", "http://www.cai.it")
         try:
             resp = urllib.request.urlopen(req)
-        except HTTPError as e:
+        except Exception as e:
             if e.code == 429:
                 if self.debug:
                     print("wait {} s".format(360))
@@ -805,7 +805,11 @@ class CaiOsmRouteDiff(CaiOsmBase):
         if "action" not in jsonosm["osm"].keys():
             return []
         output = []
-        for change in jsonosm["osm"]["action"]:
+        if type(jsonosm["osm"]["action"]) == collections.OrderedDict:
+            changes = [jsonosm["osm"]["action"]]
+        else:
+            changes = jsonosm["osm"]["action"]
+        for change in changes:
             if change["@type"] in ["modify", "delete"]:
                 value = change["new"]
             elif change["@type"] == "create":
